@@ -32,8 +32,8 @@ class CreatePostWhenMerged
         $post = DiscussionMergePost::reply(
             $event->discussion->id,
             $event->actor->id,
-            $event->posts->count(),
-            $event->mergedDiscussion->title
+            count($event->posts),
+            $event->mergedDiscussions
         );
 
         $event->discussion->mergePost($post);

@@ -22,7 +22,7 @@ return [
         ->js(__DIR__.'/js/dist/admin.js'),
     new Extend\Locales(__DIR__ . '/resources/locale'),
     (new Extend\Routes('api'))
-        ->post('/discussions/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
     function (Dispatcher $events) {
         $events->subscribe(Listeners\CreatePostWhenMerged::class);
     }

@@ -26,15 +26,15 @@ class DiscussionWasMerged
     public $discussion;
 
     /**
-     * @var Discussion
+     * @var Discussion[] Discussion
      */
-    public $mergedDiscussion;
+    public $mergedDiscussions;
 
-    public function __construct(User $actor, $posts, $discussion, $mergedDiscussion)
+    public function __construct(User $actor, $posts, $discussion, $mergedDiscussions)
     {
         $this->actor = $actor;
         $this->posts = $posts;
         $this->discussion = $discussion;
-        $this->mergedDiscussion = $mergedDiscussion;
+        $this->mergedDiscussions = $mergedDiscussions;
     }
 }

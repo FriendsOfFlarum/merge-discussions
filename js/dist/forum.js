@@ -149,7 +149,8 @@ function (_Modal) {
     var _this;
 
     _this = _Modal.call(this) || this;
-    _this.first = discussion;
+    _this.discussion = discussion;
+    _this.merging = [];
     return _this;
   }
 
@@ -175,32 +176,43 @@ function (_Modal) {
       className: "Form-group"
     }, _DiscussionSearch__WEBPACK_IMPORTED_MODULE_3__["default"].component({
       onSelect: this.select.bind(this),
-      ignore: this.first.id()
+      ignore: this.discussion.id(),
+      selected: this.merging.map(function (d) {
+        return d.id();
+      })
     })), m("div", {
       className: "Form-group"
-    }, m("p", null, "Merge ", m("b", null, this.first.title()), " into ", m("b", null, this.second && this.second.title() || '??')), flarum_components_Button__WEBPACK_IMPORTED_MODULE_1___default.a.component({
+    }, m("p", {
+      style: "text-align: left;"
+    }, m("ul", null, this.merging.map(function (d) {
+      return m("li", null, d.title());
+    })))), m("div", {
+      className: "Form-group"
+    }, flarum_components_Button__WEBPACK_IMPORTED_MODULE_1___default.a.component({
       className: 'Button Button--primary Button--block',
       type: 'submit',
       onclick: this.submit.bind(this),
       loading: this.loading,
-      disabled: !this.first || !this.second,
+      disabled: !this.discussion || !this.merging.length,
       children: app.translator.trans('fof-merge-discussions.forum.modal.submit_button')
     }))));
   };
 
   _proto.select = function select(discussion) {
-    if (discussion && discussion.id() === this.first.id()) return;
-    this.second = discussion;
+    if (discussion && discussion.id() === this.discussion.id()) return;
+    if (!this.merging.includes(discussion)) this.merging.push(discussion);
   };
 
   _proto.submit = function submit(e) {
     e.preventDefault();
     this.loading = true;
     return app.request({
-      url: app.forum.attribute('apiUrl') + "/discussions/merge",
+      url: app.forum.attribute('apiUrl') + "/discussions/" + this.discussion.id() + "/merge",
       method: 'POST',
       data: {
-        ids: [this.first.id(), this.second.id()]
+        ids: this.merging.map(function (d) {
+          return d.id();
+        })
       },
       errorHandler: this.onerror.bind(this)
     }).then(function (res) {
@@ -228,6 +240,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _babel_runtime_helpers_esm_inheritsLoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/esm/inheritsLoose */ "./node_modules/@babel/runtime/helpers/esm/inheritsLoose.js");
 /* harmony import */ var flarum_components_EventPost__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! flarum/components/EventPost */ "flarum/components/EventPost");
 /* harmony import */ var flarum_components_EventPost__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(flarum_components_EventPost__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var flarum_helpers_punctuateSeries__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! flarum/helpers/punctuateSeries */ "flarum/helpers/punctuateSeries");
+/* harmony import */ var flarum_helpers_punctuateSeries__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(flarum_helpers_punctuateSeries__WEBPACK_IMPORTED_MODULE_2__);
+
 
 
 
@@ -268,7 +283,10 @@ function (_EventPost) {
   ;
 
   _proto.descriptionData = function descriptionData() {
-    return this.props.post.content();
+    var data = this.props.post.content();
+    console.log(data.titles);
+    if (Array.isArray(data.titles)) data.titles = flarum_helpers_punctuateSeries__WEBPACK_IMPORTED_MODULE_2___default()(data.titles);
+    return data;
   };
 
   return DiscussionMergePost;
@@ -505,6 +523,17 @@ module.exports = flarum.core.compat['extend'];
 /***/ (function(module, exports) {
 
 module.exports = flarum.core.compat['helpers/highlight'];
+
+/***/ }),
+
+/***/ "flarum/helpers/punctuateSeries":
+/*!****************************************************************!*\
+  !*** external "flarum.core.compat['helpers/punctuateSeries']" ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = flarum.core.compat['helpers/punctuateSeries'];
 
 /***/ }),
 

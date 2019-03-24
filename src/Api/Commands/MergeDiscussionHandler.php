@@ -3,12 +3,13 @@
 
 namespace FoF\MergeDiscussions\Api\Commands;
 
+use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
-use Flarum\Post\PostRepository;
 use Flarum\User\AssertPermissionTrait;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Arr;
 
 class MergeDiscussionHandler
 {
@@ -46,14 +47,26 @@ class MergeDiscussionHandler
 
     public function handle(MergeDiscussion $command)
     {
-        $from = $this->discussions->findOrFail($command->ids[0]);
-        $discussion = $this->discussions->findOrFail($command->ids[1]);
+        $discussion = $this->discussions->findOrFail($command->discussionId);
+        $discussions = [];
+        $mergedPosts = [];
 //        $title = $command->title ?? $first_discussion->title;
 
 //        $this->assertCan($command->actor, 'merge', $first_discussion);
 
-        $mergedPosts = $from->posts;
-        $posts = $discussion->posts->merge($mergedPosts);
+        $posts = $discussion->posts;
+
+        foreach ($command->ids as $id) {
+            $d = Discussion::find($id);
+
+            if ($d == null) continue;
+
+            $discussions[] = $d;
+
+            $posts = $posts->merge(
+                $mergedPosts[] = $d->posts
+            );
+        }
 
         $number = 0;
 
@@ -74,10 +87,12 @@ class MergeDiscussionHandler
 
         $discussion->push();
 
-        $from->delete();
+        foreach ($discussions as $d) {
+            $d->delete();
+        }
 
         $this->events->dispatch(
-            new DiscussionWasMerged($command->actor, $mergedPosts, $discussion, $from)
+            new DiscussionWasMerged($command->actor, $mergedPosts, $discussion, $discussions)
         );
 
         return $discussion;

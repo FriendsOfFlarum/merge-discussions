@@ -16,9 +16,10 @@ class MergeDiscussion
     public $actor;
 
     /**
-     * @var string
+     * Discussion id to merge other discussions into
+     * @var int
      */
-    public $title;
+    public $discussionId;
 
     /**
      * The discussion ids to merge.
@@ -30,13 +31,13 @@ class MergeDiscussion
     /**
      * MergeDiscussion constructor.
      * @param User $actor
-     * @param string $title
+     * @param $discussionId
      * @param int[] $ids
      */
-    public function __construct(User $actor, $title, $ids)
+    public function __construct(User $actor, $discussionId, $ids)
     {
         $this->actor = $actor;
-        $this->title = $title;
+        $this->discussionId = (int) $discussionId;
         $this->ids = $ids;
     }
 }

@@ -1,4 +1,5 @@
 import EventPost from 'flarum/components/EventPost';
+import punctuateSeries from 'flarum/helpers/punctuateSeries';
 
 export default class DiscussionMergePost extends EventPost {
     /**
@@ -25,6 +26,12 @@ export default class DiscussionMergePost extends EventPost {
      * @return {Object}
      */
     descriptionData() {
-        return this.props.post.content();
+        const data = this.props.post.content();
+
+        console.log(data.titles);
+
+        if (Array.isArray(data.titles)) data.titles = punctuateSeries(data.titles);
+
+        return data;
     }
 }

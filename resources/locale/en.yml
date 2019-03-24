@@ -1,4 +1,4 @@
 fof-merge-discussions:
   forum:
     post:
-      merged: Merged <b>{count}</b> posts from <b>{title}</b>
+      merged: Merged <b>{count}</b> posts from {titles}

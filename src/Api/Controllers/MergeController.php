@@ -42,11 +42,11 @@ class MergeController extends AbstractShowController
     protected function data(ServerRequestInterface $request, Document $document)
     {
         $actor = $request->getAttribute('actor');
-        $title = Arr::get($request->getParsedBody(), 'title');
+        $discussion = array_get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getParsedBody(), 'ids');
 
         return $this->bus->dispatch(
-            new MergeDiscussion($actor, $title, $ids)
+            new MergeDiscussion($actor, $discussion, $ids)
         );
     }
 }
