@@ -110,23 +110,43 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var flarum_app__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! flarum/app */ "flarum/app");
-/* harmony import */ var flarum_app__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(flarum_app__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var flarum_components_PermissionGrid__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! flarum/components/PermissionGrid */ "flarum/components/PermissionGrid");
+/* harmony import */ var flarum_components_PermissionGrid__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(flarum_components_PermissionGrid__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var flarum_extend__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! flarum/extend */ "flarum/extend");
+/* harmony import */ var flarum_extend__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(flarum_extend__WEBPACK_IMPORTED_MODULE_1__);
 
-flarum_app__WEBPACK_IMPORTED_MODULE_0___default.a.initializers.add('fof/merge-discussions', function () {
-  console.log('Hello, admin!');
+
+app.initializers.add('fof/merge-discussions', function () {
+  Object(flarum_extend__WEBPACK_IMPORTED_MODULE_1__["extend"])(flarum_components_PermissionGrid__WEBPACK_IMPORTED_MODULE_0___default.a.prototype, 'moderateItems', function (items) {
+    items.add('mergeDiscussions', {
+      icon: 'fas fa-code-branch fa-flip-vertical',
+      label: app.translator.trans('fof-merge-discussions.admin.permissions.merge_discussions_label'),
+      permission: 'discussion.merge'
+    }, 64);
+  });
 });
 
 /***/ }),
 
-/***/ "flarum/app":
-/*!********************************************!*\
-  !*** external "flarum.core.compat['app']" ***!
-  \********************************************/
+/***/ "flarum/components/PermissionGrid":
+/*!******************************************************************!*\
+  !*** external "flarum.core.compat['components/PermissionGrid']" ***!
+  \******************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = flarum.core.compat['app'];
+module.exports = flarum.core.compat['components/PermissionGrid'];
+
+/***/ }),
+
+/***/ "flarum/extend":
+/*!***********************************************!*\
+  !*** external "flarum.core.compat['extend']" ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = flarum.core.compat['extend'];
 
 /***/ })
 

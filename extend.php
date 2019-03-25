@@ -11,6 +11,7 @@
 
 namespace FoF\MergeDiscussions;
 
+use Flarum\Api\Event\Serializing;
 use Flarum\Extend;
 use Illuminate\Events\Dispatcher;
 
@@ -25,5 +26,6 @@ return [
         ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
     function (Dispatcher $events) {
         $events->subscribe(Listeners\CreatePostWhenMerged::class);
+        $events->listen(Serializing::class, Listeners\AddApiAttributes::class);
     }
 ];

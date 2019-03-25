@@ -1,4 +1,5 @@
 import { extend } from 'flarum/extend';
+import Model from 'flarum/Model';
 import DiscussionControls from 'flarum/utils/DiscussionControls';
 import Button from 'flarum/components/Button';
 
@@ -6,12 +7,12 @@ import DiscussionMergeModal from './components/DiscussionMergeModal';
 import DiscussionMergePost from './components/DiscussionMergePost';
 
 app.initializers.add('fof/merge-discussions', () => {
-    // app.models.discussions.prototype.canMerge = Model.attribute('canMerge');
+    app.store.models.discussions.prototype.canMerge = Model.attribute('canMerge');
 
     app.postComponents.discussionMerged = DiscussionMergePost;
 
     extend(DiscussionControls, 'moderationControls', function(items, discussion) {
-        // if (!discussion.canMerge()) return;
+        if (!discussion.canMerge()) return;
 
         items.add(
             'fof-merge',

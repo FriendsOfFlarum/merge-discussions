@@ -50,9 +50,8 @@ class MergeDiscussionHandler
         $discussion = $this->discussions->findOrFail($command->discussionId);
         $discussions = [];
         $mergedPosts = [];
-//        $title = $command->title ?? $first_discussion->title;
 
-//        $this->assertCan($command->actor, 'merge', $first_discussion);
+        $this->assertCan($command->actor, 'merge', $discussion);
 
         $posts = $discussion->posts;
 

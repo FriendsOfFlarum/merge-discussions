@@ -1,6 +1,6 @@
 import Search from 'flarum/components/Search';
 import ItemList from 'flarum/utils/ItemList';
-import DiscussionSearchSource from "./DiscussionSearchSource";
+import DiscussionSearchSource from './DiscussionSearchSource';
 
 export default class DiscussionSearch extends Search {
     view() {
@@ -8,7 +8,7 @@ export default class DiscussionSearch extends Search {
 
         const vdom = super.view();
 
-        vdom.attrs.className = 'MergeDiscussions-Search open ' + vdom.attrs.className.replace(/(focused|open)/g, '');
+        vdom.attrs.className = `MergeDiscussions-Search ${this.value() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
 
         return vdom;
     }

@@ -14,8 +14,8 @@ export default class DiscussionSearchSource {
         this.results[query] = [];
 
         const params = {
-            filter: {q: query},
-            page: {limit: 3},
+            filter: { q: query },
+            page: { limit: 3 },
         };
 
         return app.store.find('discussions', params).then(results => {
@@ -33,11 +33,13 @@ export default class DiscussionSearchSource {
                 return (
                     <li className="DiscussionSearchResult" data-index={'discussions' + discussion.id()}>
                         <a onclick={() => this.onSelect(discussion)}>
-                            <div className="DiscussionSearchResult-title">{highlight(discussion.title(), query)}</div>
+                            <div className="DiscussionSearchResult-title">
+                                <i>{discussion.id()}</i> ~ {highlight(discussion.title(), query)}
+                            </div>
                         </a>
                     </li>
                 );
-            })
+            }),
         ];
     }
 }
