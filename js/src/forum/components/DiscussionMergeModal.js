@@ -95,11 +95,12 @@ export default class DiscussionMergeModal extends Modal {
                     app.current.stream.update();
                 }
 
+                if (app.cache.discussionList) this.merging.forEach(d => app.cache.discussionList.removeDiscussion(d));
+
                 m.redraw();
 
                 app.modal.close();
-
             })
-            .catch(() => this.loading = false);
+            .catch(() => (this.loading = false));
     }
 }

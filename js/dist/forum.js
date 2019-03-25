@@ -1058,10 +1058,13 @@ function (_Modal) {
               app.current.stream.update();
 
             case 4:
+              if (app.cache.discussionList) _this3.merging.forEach(function (d) {
+                return app.cache.discussionList.removeDiscussion(d);
+              });
               m.redraw();
               app.modal.close();
 
-            case 6:
+            case 7:
             case "end":
               return _context.stop();
           }
@@ -1236,7 +1239,7 @@ function () {
         q: query
       },
       page: {
-        limit: 3
+        limit: 4
       }
     };
     return app.store.find('discussions', params).then(function (results) {

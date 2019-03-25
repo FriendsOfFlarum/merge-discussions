@@ -15,7 +15,7 @@ export default class DiscussionSearchSource {
 
         const params = {
             filter: { q: query },
-            page: { limit: 3 },
+            page: { limit: 4 },
         };
 
         return app.store.find('discussions', params).then(results => {
