@@ -1,6 +1,6 @@
 {
   "name": "fof/merge-discussions",
-  "description": "Merge two discussions into one",
+  "description": "Merge two or more discussions into one",
   "keywords": [
     "flarum"
   ],
