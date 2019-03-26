@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg) [![Latest Stable Version](https://img.shields.io/packagist/v/fof/merge-discussions.svg)](https://packagist.org/packages/fof/merge-discussions)
 
-A [Flarum](http://flarum.org) extension. Merge two discussions into one.
+A [Flarum](http://flarum.org) extension. Merge two or more discussions into one.
 
 ### Installation
 
