@@ -21,3 +21,6 @@ composer update fof/merge-discussions
 ### Links
 
 - [Packagist](https://packagist.org/packages/fof/merge-discussions)
+- [GitHub](https://github.com/FriendsOfFlarum/merge-discussions)
+
+An extension by [FriendsOfFlarum](https://github.com/FriendsOfFlarum), commissioned by [giffgaff.com](https://www.giffgaff.com).
