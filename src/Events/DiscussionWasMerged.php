@@ -5,8 +5,8 @@ namespace FoF\MergeDiscussions\Events;
 
 
 use Flarum\Discussion\Discussion;
+use Flarum\Post\Post;
 use Flarum\User\User;
-use Illuminate\Database\Eloquent\Collection;
 
 class DiscussionWasMerged
 {
@@ -16,7 +16,7 @@ class DiscussionWasMerged
     public $actor;
 
     /**
-     * @var Collection
+     * @var Post[]
      */
     public $posts;
 

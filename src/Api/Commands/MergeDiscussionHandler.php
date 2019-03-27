@@ -91,7 +91,7 @@ class MergeDiscussionHandler
         }
 
         $this->events->dispatch(
-            new DiscussionWasMerged($command->actor, $mergedPosts, $discussion, $discussions)
+            new DiscussionWasMerged($command->actor, Arr::flatten($mergedPosts), $discussion, $discussions)
         );
 
         return $discussion;
