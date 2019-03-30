@@ -1,5 +1,13 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) 2019 FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace FoF\MergeDiscussions\Api\Commands;
 
@@ -31,9 +39,9 @@ class MergeDiscussionHandler
     protected $events;
 
     /**
-     * @param UserRepository $users
+     * @param UserRepository       $users
      * @param DiscussionRepository $discussions
-     * @param Dispatcher $events
+     * @param Dispatcher           $events
      */
     public function __construct(
         UserRepository $users,
@@ -58,7 +66,9 @@ class MergeDiscussionHandler
         foreach ($command->ids as $id) {
             $d = Discussion::find($id);
 
-            if ($d == null) continue;
+            if ($d == null) {
+                continue;
+            }
 
             $discussions[] = $d;
 

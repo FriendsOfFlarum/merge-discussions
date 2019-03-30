@@ -1,8 +1,15 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) 2019 FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace FoF\MergeDiscussions\Api\Commands;
-
 
 use Flarum\User\User;
 use Illuminate\Support\Arr;
@@ -17,7 +24,8 @@ class MergeDiscussion
     public $actor;
 
     /**
-     * Discussion id to merge other discussions into
+     * Discussion id to merge other discussions into.
+     *
      * @var int
      */
     public $discussionId;
@@ -36,10 +44,11 @@ class MergeDiscussion
 
     /**
      * MergeDiscussion constructor.
+     *
      * @param User $actor
      * @param $discussionId
      * @param int[] $ids
-     * @param bool $merge
+     * @param bool  $merge
      */
     public function __construct(User $actor, $discussionId, $ids, $merge = true)
     {

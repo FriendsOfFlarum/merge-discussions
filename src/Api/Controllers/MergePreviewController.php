@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) 2019 FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Api\Controllers;
 
 use Flarum\Api\Controller\AbstractShowController;
@@ -32,7 +41,7 @@ class MergePreviewController extends AbstractShowController
         'posts.user',
         'posts.user.groups',
         'posts.editedUser',
-        'posts.hiddenUser'
+        'posts.hiddenUser',
     ];
 
     /**
@@ -47,7 +56,8 @@ class MergePreviewController extends AbstractShowController
      * Get the data to be serialized and assigned to the response document.
      *
      * @param ServerRequestInterface $request
-     * @param Document $document
+     * @param Document               $document
+     *
      * @return mixed
      */
     protected function data(ServerRequestInterface $request, Document $document)
@@ -57,7 +67,7 @@ class MergePreviewController extends AbstractShowController
         $ids = Arr::get($request->getQueryParams(), 'ids');
 
         /**
-         * @type $discussion Discussion
+         * @var Discussion
          */
         $discussion = $this->bus->dispatch(
             new MergeDiscussion($actor, $discussion, $ids, false)

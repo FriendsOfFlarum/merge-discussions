@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2019 FriendsOfFlarum.
  *
- * For the full copyright and license information, please view the LICENSE.md
+ * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
@@ -21,12 +21,12 @@ return [
         ->css(__DIR__.'/resources/less/forum.less'),
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js'),
-    new Extend\Locales(__DIR__ . '/resources/locale'),
+    new Extend\Locales(__DIR__.'/resources/locale'),
     (new Extend\Routes('api'))
         ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
         ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
     function (Dispatcher $events) {
         $events->subscribe(Listeners\CreatePostWhenMerged::class);
         $events->listen(Serializing::class, Listeners\AddApiAttributes::class);
-    }
+    },
 ];
