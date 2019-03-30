@@ -84,15 +84,17 @@ class MergeDiscussionHandler
         $discussion->refreshParticipantCount();
         $discussion->refreshLastPost();
 
-        $discussion->push();
+        if ($command->merge) {
+            $discussion->push();
 
-        foreach ($discussions as $d) {
-            $d->delete();
+            foreach ($discussions as $d) {
+                $d->delete();
+            }
+
+            $this->events->dispatch(
+                new DiscussionWasMerged($command->actor, Arr::flatten($mergedPosts), $discussion, $discussions)
+            );
         }
-
-        $this->events->dispatch(
-            new DiscussionWasMerged($command->actor, Arr::flatten($mergedPosts), $discussion, $discussions)
-        );
 
         return $discussion;
     }

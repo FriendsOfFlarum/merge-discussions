@@ -5,6 +5,7 @@ namespace FoF\MergeDiscussions\Api\Commands;
 
 
 use Flarum\User\User;
+use Illuminate\Support\Arr;
 
 class MergeDiscussion
 {
@@ -29,15 +30,22 @@ class MergeDiscussion
     public $ids;
 
     /**
+     * @var bool Save merged discussion to database
+     */
+    public $merge;
+
+    /**
      * MergeDiscussion constructor.
      * @param User $actor
      * @param $discussionId
      * @param int[] $ids
+     * @param bool $merge
      */
-    public function __construct(User $actor, $discussionId, $ids)
+    public function __construct(User $actor, $discussionId, $ids, $merge = true)
     {
         $this->actor = $actor;
         $this->discussionId = (int) $discussionId;
-        $this->ids = $ids;
+        $this->ids = Arr::wrap($ids);
+        $this->merge = $merge;
     }
 }

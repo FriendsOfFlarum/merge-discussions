@@ -2,6 +2,7 @@ fof-merge-discussions:
   forum:
     modal:
       title: Merge Discussions
+      load_preview_button: Preview
       submit_button: => fof-merge-discussions.ref.merge
 
     discussion:

@@ -1,6 +1,8 @@
 import DiscussionPage from 'flarum/components/DiscussionPage';
 import Button from 'flarum/components/Button';
 import Modal from 'flarum/components/Modal';
+import PostStream from 'flarum/components/PostStream';
+import Discussion from 'flarum/models/Discussion';
 
 import DiscussionSearch from './DiscussionSearch';
 
@@ -17,6 +19,9 @@ export default class DiscussionMergeModal extends Modal {
 
         this.query = m.prop('');
         this.results = [];
+        this.preview = null;
+
+        this.loadingPreview = false;
     }
 
     title() {
@@ -24,13 +29,13 @@ export default class DiscussionMergeModal extends Modal {
     }
 
     className() {
-        return 'FoFMergeDiscussionsModal';
+        return 'FoFMergeDiscussionsModal Modal--large';
     }
 
     content() {
         return (
             <div className="Modal-body">
-                <div className="Form Form--centered">
+                <div className="Form">
                     <div className="Form-group">
                         {DiscussionSearch.component({
                             onSelect: this.select.bind(this),
@@ -49,6 +54,16 @@ export default class DiscussionMergeModal extends Modal {
                                 </li>
                             ))}
                         </ul>
+                    </div>
+                    <div className="Form-group MergeDiscussions-Preview">
+                        {Button.component({
+                            className: 'Button Button--danger',
+                            onclick: this.loadPreview.bind(this),
+                            loading: this.loadingPreview,
+                            disabled: !this.discussion || !this.merging.length,
+                            children: app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button'),
+                        })}
+                        {this.preview && <div className="MergeDiscussions-PostStream">{this.preview.render()}</div>}
                     </div>
                     <div className="Form-group">
                         {Button.component({
@@ -75,20 +90,49 @@ export default class DiscussionMergeModal extends Modal {
         this.merging.splice(this.merging.indexOf(this.merging.filter(d => d.id() === discussion.id())[0]), 1);
     }
 
+    loadPreview() {
+        this.loadingPreview = true;
+
+        return app
+            .request(this.getRequestData('GET'))
+            .then(payload => {
+                let number = 1;
+
+                if (payload.included) payload.included.map(app.store.pushObject.bind(app.store));
+
+                payload.data.relationships.posts.data
+                    .map(record => app.store.getById('posts', record.id))
+                    .sort((a, b) => a.createdAt() - b.createdAt())
+                    .forEach((p, i) => {
+                        p.number(number++);
+                        console.log(p.number() + ' => ' + app.store.getById('posts', p.id()).number());
+
+                        payload.data.relationships.posts.data[i] = {
+                            type: 'posts',
+                            id: p.id(),
+                        };
+                    });
+
+                const discussion = app.store.createRecord(payload.data.type, payload.data);
+                discussion.payload = payload;
+
+                this.loadingPreview = false;
+                const includedPosts = discussion.posts();
+
+                this.preview = new PostStream({ discussion, includedPosts });
+
+                m.lazyRedraw();
+            })
+            .catch(() => (this.loadingPreview = false));
+    }
+
     submit(e) {
         e.preventDefault();
 
         this.loading = true;
 
         return app
-            .request({
-                url: `${app.forum.attribute('apiUrl')}/discussions/${this.discussion.id()}/merge`,
-                method: 'POST',
-                data: {
-                    ids: this.merging.map(d => d.id()),
-                },
-                errorHandler: this.onerror.bind(this),
-            })
+            .request(this.getRequestData())
             .then(async () => {
                 if (app.current instanceof DiscussionPage) {
                     await app.current.refresh();
@@ -102,5 +146,16 @@ export default class DiscussionMergeModal extends Modal {
                 app.modal.close();
             })
             .catch(() => (this.loading = false));
+    }
+
+    getRequestData(method = 'POST') {
+        return {
+            method,
+            url: `${app.forum.attribute('apiUrl')}${this.discussion.apiEndpoint()}/merge`,
+            data: {
+                ids: this.merging.map(d => d.id()),
+            },
+            errorHandler: this.onerror.bind(this),
+        };
     }
 }

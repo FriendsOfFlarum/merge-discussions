@@ -1,7 +1,5 @@
 .FoFMergeDiscussionsModal {
   .MergeDiscussions-Discussions {
-    text-align: left;
-
     ul {
       list-style-type: none;
       padding-left: 5px;
@@ -22,6 +20,23 @@
     .Search-results {
       left: 0;
       position: relative;
+    }
+  }
+
+  .MergeDiscussions-Preview {
+    .MergeDiscussions-PostStream {
+      margin-top: 10px;
+      padding: 0 10px;
+
+      background-color: @body-bg;
+      .box-shadow(0 2px 6px @shadow-color);
+      border-radius: 5px;
+
+
+      height: 400px;
+      resize: vertical;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
   }
 }
