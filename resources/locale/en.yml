@@ -2,6 +2,7 @@ fof-merge-discussions:
   forum:
     modal:
       title: Merge Discussions
+      help_text: Choose discussion(s) to merge into <b>{title}</b>.
       load_preview_button: Preview
       submit_button: => fof-merge-discussions.ref.merge
 

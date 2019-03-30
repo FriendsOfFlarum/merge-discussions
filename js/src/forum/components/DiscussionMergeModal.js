@@ -2,7 +2,6 @@ import DiscussionPage from 'flarum/components/DiscussionPage';
 import Button from 'flarum/components/Button';
 import Modal from 'flarum/components/Modal';
 import PostStream from 'flarum/components/PostStream';
-import Discussion from 'flarum/models/Discussion';
 
 import DiscussionSearch from './DiscussionSearch';
 
@@ -17,7 +16,6 @@ export default class DiscussionMergeModal extends Modal {
     init() {
         super.init();
 
-        this.query = m.prop('');
         this.results = [];
         this.preview = null;
 
@@ -36,6 +34,10 @@ export default class DiscussionMergeModal extends Modal {
         return (
             <div className="Modal-body">
                 <div className="Form">
+                    <p className="help">{app.translator.trans('fof-merge-discussions.forum.modal.help_text', {
+                        title: this.discussion.title(),
+                    })}</p>
+
                     <div className="Form-group">
                         {DiscussionSearch.component({
                             onSelect: this.select.bind(this),
