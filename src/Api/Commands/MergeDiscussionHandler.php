@@ -79,7 +79,7 @@ class MergeDiscussionHandler
 
         $number = 0;
 
-        $posts->each(function ($post, $i) use ($discussion, &$number) {
+        $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
             $number++;
 
             $post->number = $number;
@@ -90,12 +90,14 @@ class MergeDiscussionHandler
 
         $discussion->post_number_index = $number;
 
-        $discussion->refreshCommentCount();
-        $discussion->refreshParticipantCount();
-        $discussion->refreshLastPost();
-
         if ($command->merge) {
             $discussion->push();
+
+            $discussion->refreshCommentCount()
+                ->refreshParticipantCount()
+                ->refreshLastPost()
+                ->setFirstPost($discussion->posts->first())
+                ->save();
 
             foreach ($discussions as $d) {
                 $d->delete();
