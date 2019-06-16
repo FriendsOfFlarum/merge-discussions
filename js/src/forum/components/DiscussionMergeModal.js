@@ -34,9 +34,11 @@ export default class DiscussionMergeModal extends Modal {
         return (
             <div className="Modal-body">
                 <div className="Form">
-                    <p className="help">{app.translator.trans('fof-merge-discussions.forum.modal.help_text', {
-                        title: this.discussion.title(),
-                    })}</p>
+                    <p className="help">
+                        {app.translator.trans('fof-merge-discussions.forum.modal.help_text', {
+                            title: this.discussion.title(),
+                        })}
+                    </p>
 
                     <div className="Form-group">
                         {DiscussionSearch.component({
