@@ -109,7 +109,6 @@ export default class DiscussionMergeModal extends Modal {
                     .sort((a, b) => a.createdAt() - b.createdAt())
                     .forEach((p, i) => {
                         p.number(number++);
-                        console.log(p.number() + ' => ' + app.store.getById('posts', p.id()).number());
 
                         payload.data.relationships.posts.data[i] = {
                             type: 'posts',
