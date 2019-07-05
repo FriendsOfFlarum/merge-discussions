@@ -9,6 +9,7 @@ export default class DiscussionMergeModal extends Modal {
     constructor(discussion) {
         super();
 
+        this.type = m.prop('target');
         this.discussion = discussion;
         this.merging = [];
     }
@@ -34,18 +35,31 @@ export default class DiscussionMergeModal extends Modal {
         return (
             <div className="Modal-body">
                 <div className="Form">
+                    <div className="Form-group">
+                        {['target', 'from'].map(key => (
+                            <div>
+                                <input type="radio" id={`type_${key}`} checked={this.type() === key} onclick={this.changeType.bind(this, key)} />
+                                &nbsp;
+                                <label htmlFor={`type_${key}`}>{app.translator.trans(`fof-merge-discussions.forum.modal.type_${key}_label`)}</label>
+                            </div>
+                        ))}
+                    </div>
+
                     <p className="help">
-                        {app.translator.trans('fof-merge-discussions.forum.modal.help_text', {
+                        {app.translator.trans(`fof-merge-discussions.forum.modal.type_${this.type()}_help_text`, {
                             title: this.discussion.title(),
                         })}
                     </p>
 
-                    <div className="Form-group">
-                        {DiscussionSearch.component({
-                            onSelect: this.select.bind(this),
-                            ignore: this.discussion.id(),
-                        })}
-                    </div>
+                    {!this.disabled() && (
+                        <div className="Form-group">
+                            {DiscussionSearch.component({
+                                onSelect: this.select.bind(this),
+                                ignore: this.discussion.id(),
+                            })}
+                        </div>
+                    )}
+
                     <div className="Form-group MergeDiscussions-Discussions">
                         <ul>
                             {this.merging.map(d => (
@@ -67,7 +81,14 @@ export default class DiscussionMergeModal extends Modal {
                             disabled: !this.discussion || !this.merging.length,
                             children: app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button'),
                         })}
-                        {this.preview && <div className="MergeDiscussions-PostStream">{this.preview.render()}</div>}
+                        {this.preview && (
+                            <div className="MergeDiscussions-PostStream">
+                                <div className="Hero">
+                                    <h2>{this.type() === 'target' ? this.discussion.title() : this.merging[0].title()}</h2>
+                                </div>
+                                {this.preview.render()}
+                            </div>
+                        )}
                     </div>
                     <div className="Form-group">
                         {Button.component({
@@ -84,14 +105,29 @@ export default class DiscussionMergeModal extends Modal {
         );
     }
 
+    disabled() {
+        return this.type() === 'from' && this.merging.length !== 0;
+    }
+
     select(discussion) {
         if (discussion && discussion.id() === this.discussion.id()) return;
 
-        if (!this.merging.includes(discussion)) this.merging.push(discussion);
+        if (!this.merging.includes(discussion) && !this.disabled()) {
+            this.merging.push(discussion);
+            delete this.preview;
+        }
     }
 
     remove(discussion) {
+        delete this.preview;
+
         this.merging.splice(this.merging.indexOf(this.merging.filter(d => d.id() === discussion.id())[0]), 1);
+    }
+
+    changeType(key) {
+        this.type(key);
+
+        if (this.merging.length > 1) this.merging = [];
     }
 
     loadPreview() {
@@ -138,11 +174,22 @@ export default class DiscussionMergeModal extends Modal {
             .request(this.getRequestData())
             .then(async () => {
                 if (app.current instanceof DiscussionPage) {
-                    await app.current.refresh();
-                    app.current.stream.update();
+                    if (this.type() === 'target') {
+                        await app.current.refresh();
+
+                        app.current.stream.update();
+                    } else {
+                        m.route(app.route.discussion(this.merging[0]));
+                    }
                 }
 
-                if (app.cache.discussionList) this.merging.forEach(d => app.cache.discussionList.removeDiscussion(d));
+                if (app.cache.discussionList) {
+                    if (this.type() === 'target') {
+                        this.merging.forEach(d => app.cache.discussionList.removeDiscussion(d));
+                    } else {
+                        app.cache.discussionList.removeDiscussion(this.discussion);
+                    }
+                }
 
                 m.redraw();
 
@@ -152,11 +199,15 @@ export default class DiscussionMergeModal extends Modal {
     }
 
     getRequestData(method = 'POST') {
+        const isTarget = this.type() === 'target';
+        const endpoint = isTarget ? this.discussion.apiEndpoint() : this.merging[0].apiEndpoint();
+        const merging = isTarget ? this.merging.map(d => d.id()) : this.discussion.id();
+
         return {
             method,
-            url: `${app.forum.attribute('apiUrl')}${this.discussion.apiEndpoint()}/merge`,
+            url: `${app.forum.attribute('apiUrl')}${endpoint}/merge`,
             data: {
-                ids: this.merging.map(d => d.id()),
+                ids: merging,
             },
             errorHandler: this.onerror.bind(this),
         };
