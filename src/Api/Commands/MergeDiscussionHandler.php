@@ -88,6 +88,9 @@ class MergeDiscussionHandler
             $discussion->posts[$i] = $post;
         });
 
+        // @see https://github.com/FriendsOfFlarum/merge-discussions/issues/5
+        $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
+
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
