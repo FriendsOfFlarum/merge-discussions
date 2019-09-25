@@ -140,9 +140,7 @@ class MergeDiscussionHandler
         app('log')->error($e);
 
         throw new ValidationException([
-            'fof/merge-discussions' => $msg
+            'fof/merge-discussions' => $msg,
         ]);
     }
-
-
 }
