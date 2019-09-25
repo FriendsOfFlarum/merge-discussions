@@ -13,11 +13,13 @@ namespace FoF\MergeDiscussions\Api\Commands;
 
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
+use Flarum\Foundation\ValidationException;
 use Flarum\User\AssertPermissionTrait;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
+use Throwable;
 
 class MergeDiscussionHandler
 {
@@ -94,17 +96,33 @@ class MergeDiscussionHandler
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
-            $discussion->push();
+            app('db.connection')->transaction(function () use ($discussions, $discussion) {
+                try {
+                    $discussion->push();
+                } catch (Throwable $e) {
+                    $this->catchError($e, 'merging');
+                }
 
-            $discussion->refreshCommentCount()
-                ->refreshParticipantCount()
-                ->refreshLastPost()
-                ->setFirstPost($discussion->posts->first())
-                ->save();
+                try {
+                    $discussion
+                        ->refresh()
+                        ->refreshCommentCount()
+                        ->refreshParticipantCount()
+                        ->refreshLastPost()
+                        ->setFirstPost($discussion->posts->first())
+                        ->save();
+                } catch (Throwable $e) {
+                    $this->catchError($e, 'updating');
+                }
 
-            foreach ($discussions as $d) {
-                $d->delete();
-            }
+                try {
+                    foreach ($discussions as $d) {
+                        $d->delete();
+                    }
+                } catch (Throwable $e) {
+                    $this->catchError($e, 'deleting');
+                }
+            });
 
             $this->events->dispatch(
                 new DiscussionWasMerged($command->actor, Arr::flatten($mergedPosts), $discussion, $discussions)
@@ -113,4 +131,18 @@ class MergeDiscussionHandler
 
         return $discussion;
     }
+
+    private function catchError(Throwable $e, string $type)
+    {
+        $msg = app('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
+
+        app('log')->error("[fof/merge-discussions] $msg");
+        app('log')->error($e);
+
+        throw new ValidationException([
+            'fof/merge-discussions' => $msg
+        ]);
+    }
+
+
 }

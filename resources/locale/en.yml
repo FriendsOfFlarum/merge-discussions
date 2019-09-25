@@ -22,5 +22,11 @@ fof-merge-discussions:
     permissions:
       merge_discussions_label: Merge discussions
 
+  api:
+    error:
+      merging_failed: Failed to merge discussions.
+      updating_failed: Failed to update discussion details.
+      deleting_failed: Failed to delete empty discussions.
+
   ref:
     merge: Merge
