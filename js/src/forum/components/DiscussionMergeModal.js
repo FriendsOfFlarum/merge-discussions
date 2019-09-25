@@ -195,7 +195,8 @@ export default class DiscussionMergeModal extends Modal {
 
                 app.modal.close();
             })
-            .catch(() => (this.loading = false));
+            .catch(() => {})
+            .then(this.loaded.bind(this))
     }
 
     getRequestData(method = 'POST') {
