@@ -65,6 +65,18 @@ class MergeDiscussionHandler
 
         $posts = $discussion->posts;
 
+        if ($posts->last()->number > $posts->count()) {
+            //merge will fail, let's try renumbering it
+            $fixNumber = ($posts->last()->number + 100);
+            foreach ($posts as $post) {
+                $fixNumber++;
+                $post->number = $fixNumber;
+            }
+            $discussion->post_number_index = $fixNumber;
+            $discussion->setRelation('posts', $posts->sortByDesc('number'));
+            $discussion->push();
+        }
+
         foreach ($command->ids as $id) {
             $d = Discussion::find($id);
 
@@ -94,7 +106,7 @@ class MergeDiscussionHandler
         $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
 
         $discussion->post_number_index = $number;
-
+        
         if ($command->merge) {
             app('db.connection')->transaction(function () use ($discussions, $discussion) {
                 try {
