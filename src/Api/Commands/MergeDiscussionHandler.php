@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Api\Commands;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
+use Flarum\Post\Post;
 use Flarum\User\AssertPermissionTrait;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
@@ -65,17 +66,41 @@ class MergeDiscussionHandler
 
         $posts = $discussion->posts;
 
-        if ($posts->last()->number > $posts->count()) {
-            //merge will fail, let's try renumbering it
-            $fixNumber = ($posts->last()->number + 100);
-            foreach ($posts as $post) {
-                $fixNumber++;
-                $post->number = $fixNumber;
+        // ##
+        // ## Begin destination discussion prep
+        // ##
+
+        // To prevent duplicate key issues after the merge, renumber posts in the discussion out of the existing range
+        // and leave enough space for the incoming posts to be merged (helps when merging mega threads)
+
+        $incomingPostsCount = 0;
+
+        foreach ($command->ids as $id) {
+            $dI = Discussion::find($id);
+            foreach ($dI as $discussionIncoming) {
+                $c = Post::where('discussion_id', $discussionIncoming->id)->count();
+                $incomingPostsCount = $incomingPostsCount + $c;
             }
-            $discussion->post_number_index = $fixNumber;
+        }
+
+        // We have to reorder and renumber before the next foreach loop
+        $fixNumber = ($posts->last()->number) + 100 + $incomingPostsCount;
+
+        foreach ($posts as $post) {
+            $fixNumber++;
+            $post->number = $fixNumber;
+        }
+
+        $discussion->post_number_index = $fixNumber;
+
+        app('db.connection')->transaction(function () use ($posts, $discussion) {
             $discussion->setRelation('posts', $posts->sortByDesc('number'));
             $discussion->push();
-        }
+        });
+
+        // ##
+        // ## End destination discussion prep
+        // ##
 
         foreach ($command->ids as $id) {
             $d = Discussion::find($id);
@@ -106,7 +131,7 @@ class MergeDiscussionHandler
         $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
 
         $discussion->post_number_index = $number;
-        
+
         if ($command->merge) {
             app('db.connection')->transaction(function () use ($discussions, $discussion) {
                 try {
