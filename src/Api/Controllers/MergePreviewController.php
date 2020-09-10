@@ -63,7 +63,7 @@ class MergePreviewController extends AbstractShowController
     protected function data(ServerRequestInterface $request, Document $document)
     {
         $actor = $request->getAttribute('actor');
-        $discussion = array_get($request->getQueryParams(), 'id');
+        $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getQueryParams(), 'ids');
 
         /**
