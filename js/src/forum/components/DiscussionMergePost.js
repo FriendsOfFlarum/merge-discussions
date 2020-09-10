@@ -26,7 +26,7 @@ export default class DiscussionMergePost extends EventPost {
      * @return {Object}
      */
     descriptionData() {
-        const data = this.props.post.content();
+        const data = this.attrs.post.content();
 
         if (Array.isArray(data.titles)) data.titles = punctuateSeries(data.titles).join('');
 
