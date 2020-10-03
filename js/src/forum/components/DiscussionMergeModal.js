@@ -4,6 +4,7 @@ import Modal from 'flarum/components/Modal';
 import PostStream from 'flarum/components/PostStream';
 import PostStreamState from 'flarum/states/PostStreamState';
 import GlobalSearchState from 'flarum/states/GlobalSearchState';
+import Stream from 'flarum/utils/Stream';
 
 import DiscussionSearch from './DiscussionSearch';
 
@@ -12,7 +13,7 @@ export default class DiscussionMergeModal extends Modal {
         super.oninit(vnode);
 
         this.discussion = this.attrs.discussion;
-        this.type = m.stream('target');
+        this.type = Stream('target');
         this.merging = [];
 
         this.results = [];
