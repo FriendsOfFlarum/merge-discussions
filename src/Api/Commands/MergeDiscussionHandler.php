@@ -14,7 +14,6 @@ namespace FoF\MergeDiscussions\Api\Commands;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
-use Flarum\User\AssertPermissionTrait;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use Illuminate\Events\Dispatcher;
@@ -23,8 +22,6 @@ use Throwable;
 
 class MergeDiscussionHandler
 {
-    use AssertPermissionTrait;
-
     /**
      * @var UserRepository
      */
@@ -61,7 +58,7 @@ class MergeDiscussionHandler
         $discussions = [];
         $mergedPosts = [];
 
-        $this->assertCan($command->actor, 'merge', $discussion);
+        $command->actor->assertCan('merge', $discussion);
 
         $posts = $discussion->posts;
 
