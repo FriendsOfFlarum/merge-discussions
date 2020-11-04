@@ -8,7 +8,7 @@ export default class DiscussionSearch extends Search {
 
         const vdom = super.view();
 
-        vdom.attrs.className = `MergeDiscussions-Search ${this.value() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
+        vdom.attrs.className = `MergeDiscussions-Search ${this.state.getValue() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
 
         return vdom;
     }
@@ -16,7 +16,7 @@ export default class DiscussionSearch extends Search {
     sourceItems() {
         const items = new ItemList();
 
-        items.add('discussions', new DiscussionSearchSource(this.props.onSelect, this.props.ignore));
+        items.add('discussions', new DiscussionSearchSource(this.attrs.onSelect, this.attrs.ignore));
 
         return items;
     }

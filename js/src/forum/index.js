@@ -18,9 +18,8 @@ app.initializers.add('fof/merge-discussions', () => {
             'fof-merge',
             Button.component({
                 icon: 'fas fa-code-branch fa-flip-vertical',
-                children: app.translator.trans('fof-merge-discussions.forum.discussion.merge'),
-                onclick: () => app.modal.show(new DiscussionMergeModal(discussion)),
-            })
+                onclick: () => app.modal.show(DiscussionMergeModal, {discussion}),
+            }, app.translator.trans('fof-merge-discussions.forum.discussion.merge'))
         );
     });
 });
