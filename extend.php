@@ -11,22 +11,33 @@
 
 namespace FoF\MergeDiscussions;
 
-use Flarum\Api\Event\Serializing;
+use Flarum\Api\Serializer\DiscussionSerializer;
+use Flarum\Database\AbstractModel;
 use Flarum\Extend;
-use Illuminate\Events\Dispatcher;
+use FoF\MergeDiscussions\Events\DiscussionWasMerged;
+use FoF\MergeDiscussions\Posts\DiscussionMergePost;
 
 return [
     (new Extend\Frontend('forum'))
         ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/resources/less/forum.less'),
+
     (new Extend\Frontend('admin'))
         ->js(__DIR__.'/js/dist/admin.js'),
     new Extend\Locales(__DIR__.'/resources/locale'),
+
     (new Extend\Routes('api'))
         ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
         ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
-    function (Dispatcher $events) {
-        $events->subscribe(Listeners\CreatePostWhenMerged::class);
-        $events->listen(Serializing::class, Listeners\AddApiAttributes::class);
-    },
+
+    (new Extend\Post())
+        ->type(DiscussionMergePost::class),
+
+    (new Extend\Event())
+        ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class),
+
+    (new Extend\ApiSerializer(DiscussionSerializer::class))
+        ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
+            return $serializer->getActor()->can('merge', $discussion);
+        }),
 ];
