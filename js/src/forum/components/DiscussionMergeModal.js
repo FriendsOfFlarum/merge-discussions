@@ -76,12 +76,15 @@ export default class DiscussionMergeModal extends Modal {
                         </ul>
                     </div>
                     <div className="Form-group MergeDiscussions-Preview">
-                        {Button.component({
-                            className: 'Button Button--danger',
-                            onclick: this.loadPreview.bind(this),
-                            loading: this.loadingPreview,
-                            disabled: !this.discussion || !this.merging.length,
-                        }, app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button'))}
+                        {Button.component(
+                            {
+                                className: 'Button Button--danger',
+                                onclick: this.loadPreview.bind(this),
+                                loading: this.loadingPreview,
+                                disabled: !this.discussion || !this.merging.length,
+                            },
+                            app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')
+                        )}
                         {this.preview && (
                             <div className="MergeDiscussions-PostStream">
                                 <div className="Hero">
@@ -92,13 +95,16 @@ export default class DiscussionMergeModal extends Modal {
                         )}
                     </div>
                     <div className="Form-group">
-                        {Button.component({
-                            className: 'Button Button--primary Button--block',
-                            type: 'submit',
-                            onclick: this.submit.bind(this),
-                            loading: this.loading,
-                            disabled: !this.discussion || !this.merging.length,
-                        }, app.translator.trans('fof-merge-discussions.forum.modal.submit_button'))}
+                        {Button.component(
+                            {
+                                className: 'Button Button--primary Button--block',
+                                type: 'submit',
+                                onclick: this.submit.bind(this),
+                                loading: this.loading,
+                                disabled: !this.discussion || !this.merging.length,
+                            },
+                            app.translator.trans('fof-merge-discussions.forum.modal.submit_button')
+                        )}
                     </div>
                 </div>
             </div>
@@ -183,12 +189,10 @@ export default class DiscussionMergeModal extends Modal {
                     }
                 }
 
-                if (app.cache.discussionList) {
-                    if (this.type() === 'target') {
-                        this.merging.forEach(d => app.cache.discussionList.removeDiscussion(d));
-                    } else {
-                        app.cache.discussionList.removeDiscussion(this.discussion);
-                    }
+                if (this.type() === 'target') {
+                    this.merging.forEach(d => app.discussions.removeDiscussion(d));
+                } else {
+                    app.discussions.removeDiscussion(this.discussion);
                 }
 
                 m.redraw();
@@ -196,7 +200,7 @@ export default class DiscussionMergeModal extends Modal {
                 app.modal.close();
             })
             .catch(() => {})
-            .then(this.loaded.bind(this))
+            .then(this.loaded.bind(this));
     }
 
     getRequestData(method = 'POST') {
