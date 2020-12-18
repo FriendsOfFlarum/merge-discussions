@@ -11,15 +11,18 @@ app.initializers.add('fof/merge-discussions', () => {
 
     app.postComponents.discussionMerged = DiscussionMergePost;
 
-    extend(DiscussionControls, 'moderationControls', function(items, discussion) {
+    extend(DiscussionControls, 'moderationControls', function (items, discussion) {
         if (!discussion.canMerge()) return;
 
         items.add(
             'fof-merge',
-            Button.component({
-                icon: 'fas fa-code-branch fa-flip-vertical',
-                onclick: () => app.modal.show(DiscussionMergeModal, {discussion}),
-            }, app.translator.trans('fof-merge-discussions.forum.discussion.merge'))
+            Button.component(
+                {
+                    icon: 'fas fa-code-branch fa-flip-vertical',
+                    onclick: () => app.modal.show(DiscussionMergeModal, { discussion }),
+                },
+                app.translator.trans('fof-merge-discussions.forum.discussion.merge')
+            )
         );
     });
 });

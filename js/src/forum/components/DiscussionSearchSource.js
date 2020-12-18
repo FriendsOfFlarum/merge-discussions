@@ -23,14 +23,14 @@ export default class DiscussionSearchSource {
         if (!Number.isNaN(id) && id !== this.ignore) {
             return app.store
                 .find('discussions', id)
-                .then(d => {
+                .then((d) => {
                     this.results[query] = [d];
                 })
                 .catch(() => []);
         }
 
-        return app.store.find('discussions', params).then(results => {
-            this.results[query] = results.filter(d => d.id() !== this.ignore);
+        return app.store.find('discussions', params).then((results) => {
+            this.results[query] = results.filter((d) => d.id() !== this.ignore);
         });
     }
 
@@ -40,7 +40,7 @@ export default class DiscussionSearchSource {
         const results = this.results[query] || [];
 
         return [
-            results.map(discussion => {
+            results.map((discussion) => {
                 return (
                     <li className="DiscussionSearchResult" data-index={'discussions' + discussion.id()}>
                         <a onclick={() => this.onSelect(discussion)}>

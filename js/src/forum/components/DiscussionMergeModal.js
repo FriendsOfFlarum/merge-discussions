@@ -37,7 +37,7 @@ export default class DiscussionMergeModal extends Modal {
             <div className="Modal-body">
                 <div className="Form">
                     <div className="Form-group">
-                        {['target', 'from'].map(key => (
+                        {['target', 'from'].map((key) => (
                             <div>
                                 <input type="radio" id={`type_${key}`} checked={this.type() === key} onclick={this.changeType.bind(this, key)} />
                                 &nbsp;
@@ -64,7 +64,7 @@ export default class DiscussionMergeModal extends Modal {
 
                     <div className="Form-group MergeDiscussions-Discussions">
                         <ul>
-                            {this.merging.map(d => (
+                            {this.merging.map((d) => (
                                 <li>
                                     <i className="fas fa-trash DeleteEntry-Button" onclick={() => this.remove(d)} />
                                     &nbsp;
@@ -127,7 +127,7 @@ export default class DiscussionMergeModal extends Modal {
     remove(discussion) {
         delete this.preview;
 
-        this.merging.splice(this.merging.indexOf(this.merging.filter(d => d.id() === discussion.id())[0]), 1);
+        this.merging.splice(this.merging.indexOf(this.merging.filter((d) => d.id() === discussion.id())[0]), 1);
     }
 
     changeType(key) {
@@ -141,13 +141,13 @@ export default class DiscussionMergeModal extends Modal {
 
         return app
             .request(this.getRequestData('GET'))
-            .then(payload => {
+            .then((payload) => {
                 let number = 1;
 
                 if (payload.included) payload.included.map(app.store.pushObject.bind(app.store));
 
                 payload.data.relationships.posts.data
-                    .map(record => app.store.getById('posts', record.id))
+                    .map((record) => app.store.getById('posts', record.id))
                     .sort((a, b) => a.createdAt() - b.createdAt())
                     .forEach((p, i) => {
                         p.number(number++);
@@ -190,7 +190,7 @@ export default class DiscussionMergeModal extends Modal {
                 }
 
                 if (this.type() === 'target') {
-                    this.merging.forEach(d => app.discussions.removeDiscussion(d));
+                    this.merging.forEach((d) => app.discussions.removeDiscussion(d));
                 } else {
                     app.discussions.removeDiscussion(this.discussion);
                 }
@@ -206,7 +206,7 @@ export default class DiscussionMergeModal extends Modal {
     getRequestData(method = 'POST') {
         const isTarget = this.type() === 'target';
         const endpoint = isTarget ? this.discussion.apiEndpoint() : this.merging[0].apiEndpoint();
-        const merging = isTarget ? this.merging.map(d => d.id()) : this.discussion.id();
+        const merging = isTarget ? this.merging.map((d) => d.id()) : this.discussion.id();
 
         return {
             method,
