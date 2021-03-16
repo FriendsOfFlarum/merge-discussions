@@ -1,5 +1,5 @@
-import Search from 'flarum/components/Search';
-import ItemList from 'flarum/utils/ItemList';
+import Search from 'flarum/common/components/Search';
+import ItemList from 'flarum/common/utils/ItemList';
 import DiscussionSearchSource from './DiscussionSearchSource';
 
 export default class DiscussionSearch extends Search {

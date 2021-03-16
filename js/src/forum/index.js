@@ -1,7 +1,7 @@
-import { extend } from 'flarum/extend';
-import Model from 'flarum/Model';
-import DiscussionControls from 'flarum/utils/DiscussionControls';
-import Button from 'flarum/components/Button';
+import { extend } from 'flarum/common/extend';
+import Model from 'flarum/common/Model';
+import DiscussionControls from 'flarum/common/utils/DiscussionControls';
+import Button from 'flarum/common/components/Button';
 
 import DiscussionMergeModal from './components/DiscussionMergeModal';
 import DiscussionMergePost from './components/DiscussionMergePost';

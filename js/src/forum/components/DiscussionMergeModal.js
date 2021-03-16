@@ -1,10 +1,10 @@
-import DiscussionPage from 'flarum/components/DiscussionPage';
-import Button from 'flarum/components/Button';
-import Modal from 'flarum/components/Modal';
-import PostStream from 'flarum/components/PostStream';
-import PostStreamState from 'flarum/states/PostStreamState';
-import GlobalSearchState from 'flarum/states/GlobalSearchState';
-import Stream from 'flarum/utils/Stream';
+import DiscussionPage from 'flarum/common/components/DiscussionPage';
+import Button from 'flarum/common/components/Button';
+import Modal from 'flarum/common/components/Modal';
+import PostStream from 'flarum/common/components/PostStream';
+import PostStreamState from 'flarum/common/states/PostStreamState';
+import GlobalSearchState from 'flarum/common/states/GlobalSearchState';
+import Stream from 'flarum/common/utils/Stream';
 
 import DiscussionSearch from './DiscussionSearch';
 
