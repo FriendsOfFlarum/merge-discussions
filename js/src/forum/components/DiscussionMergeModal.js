@@ -1,10 +1,12 @@
-import DiscussionPage from 'flarum/components/DiscussionPage';
-import Button from 'flarum/components/Button';
-import Modal from 'flarum/components/Modal';
-import PostStream from 'flarum/components/PostStream';
-import PostStreamState from 'flarum/states/PostStreamState';
-import GlobalSearchState from 'flarum/states/GlobalSearchState';
-import Stream from 'flarum/utils/Stream';
+import app from 'flarum/forum/app';
+import DiscussionPage from 'flarum/forum/components/DiscussionPage';
+import Button from 'flarum/common/components/Button';
+import Modal from 'flarum/common/components/Modal';
+import PostStream from 'flarum/forum/components/PostStream';
+import PostStreamState from 'flarum/forum/states/PostStreamState';
+import GlobalSearchState from 'flarum/forum/states/GlobalSearchState';
+import Stream from 'flarum/common/utils/Stream';
+import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
 
@@ -52,15 +54,13 @@ export default class DiscussionMergeModal extends Modal {
                         })}
                     </p>
 
-                    {!this.disabled() && (
-                        <div className="Form-group">
-                            {DiscussionSearch.component({
-                                state: this.search,
-                                onSelect: this.select.bind(this),
-                                ignore: this.discussion.id(),
-                            })}
-                        </div>
-                    )}
+                    <div className={classList('FormGroup', this.disabled() && 'hidden')}>
+                        {DiscussionSearch.component({
+                            state: this.search,
+                            onSelect: this.select.bind(this),
+                            ignore: this.discussion.id(),
+                        })}
+                    </div>
 
                     <div className="Form-group MergeDiscussions-Discussions">
                         <ul>
@@ -90,7 +90,7 @@ export default class DiscussionMergeModal extends Modal {
                                 <div className="Hero">
                                     <h2>{this.type() === 'target' ? this.discussion.title() : this.merging[0].title()}</h2>
                                 </div>
-                                <PostStream stream={this.preview} discussion={this.preview.discussion}></PostStream>
+                                <PostStream stream={this.preview} discussion={this.preview.discussion} />
                             </div>
                         )}
                     </div>

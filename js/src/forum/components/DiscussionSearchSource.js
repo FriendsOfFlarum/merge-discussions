@@ -1,8 +1,8 @@
-import highlight from 'flarum/helpers/highlight';
+import highlight from 'flarum/common/helpers/highlight';
 
 export default class DiscussionSearchSource {
     constructor(onSelect, ignore) {
-        this.results = {};
+        this.results = new Map();
 
         this.onSelect = onSelect;
         this.ignore = ignore;
@@ -11,7 +11,7 @@ export default class DiscussionSearchSource {
     search(query) {
         query = query.toLowerCase();
 
-        this.results[query] = [];
+        this.results.set(query, []);
 
         const params = {
             filter: { q: query },
@@ -24,20 +24,23 @@ export default class DiscussionSearchSource {
             return app.store
                 .find('discussions', id)
                 .then((d) => {
-                    this.results[query] = [d];
+                    this.results.set(query, [d]);
                 })
                 .catch(() => []);
         }
 
         return app.store.find('discussions', params).then((results) => {
-            this.results[query] = results.filter((d) => d.id() !== this.ignore);
+            this.results.set(
+                query,
+                results.filter((d) => d.id() !== this.ignore)
+            );
         });
     }
 
     view(query) {
         query = query.toLowerCase();
 
-        const results = this.results[query] || [];
+        const results = this.results.get(query) || [];
 
         return [
             results.map((discussion) => {
