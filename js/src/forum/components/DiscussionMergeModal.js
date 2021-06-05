@@ -1,5 +1,6 @@
 import app from 'flarum/forum/app';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
+import IndexPage from 'flarum/forum/components/IndexPage';
 import Button from 'flarum/common/components/Button';
 import Modal from 'flarum/common/components/Modal';
 import PostStream from 'flarum/forum/components/PostStream';
@@ -187,6 +188,8 @@ export default class DiscussionMergeModal extends Modal {
                     } else {
                         m.route.set(app.route.discussion(this.merging[0]));
                     }
+                } else if (app.current.matches(IndexPage)) {
+                    await app.store.find('discussions', this.type() === 'target' ? this.discussion.id() : this.merging[0].id());
                 }
 
                 if (this.type() === 'target') {
