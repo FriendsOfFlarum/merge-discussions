@@ -9,7 +9,7 @@ A [Flarum](http://flarum.org) extension. Merge two or more discussions into one.
 Use [Bazaar](https://discuss.flarum.org/d/5151-flagrow-bazaar-the-extension-marketplace) or install manually with composer:
 
 ```sh
-composer require fof/merge-discussions
+composer require fof/merge-discussions:"*"
 ```
 
 ### Updating
