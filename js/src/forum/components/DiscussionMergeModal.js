@@ -189,7 +189,6 @@ export default class DiscussionMergeModal extends Modal {
                     await app.store.find('discussions', final.id());
                 }
 
-                console.log('removing old discussions');
 
                 if (this.type() === 'target') {
                     this.merging.forEach((d) => app.discussions.removeDiscussion(d));
