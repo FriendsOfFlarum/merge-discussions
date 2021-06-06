@@ -93,7 +93,7 @@ class MergeDiscussionHandler
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
-            app('db.connection')->transaction(function () use ($discussions, $discussion) {
+            resolve('db.connection')->transaction(function () use ($discussions, $discussion) {
                 try {
                     $discussion->push();
                 } catch (Throwable $e) {
@@ -131,10 +131,10 @@ class MergeDiscussionHandler
 
     private function catchError(Throwable $e, string $type)
     {
-        $msg = app('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
+        $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
 
-        app('log')->error("[fof/merge-discussions] $msg");
-        app('log')->error($e);
+        resolve('log')->error("[fof/merge-discussions] $msg");
+        resolve('log')->error($e);
 
         throw new ValidationException([
             'fof/merge-discussions' => $msg,
