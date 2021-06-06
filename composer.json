@@ -36,7 +36,7 @@
   "extra": {
     "flarum-extension": {
       "title": "FoF Merge Discussions",
-      "category": "moderation",
+      "category": "feature",
       "icon": {
         "name": "fas fa-code-branch fa-flip-vertical",
         "backgroundColor": "#e74c3c",
