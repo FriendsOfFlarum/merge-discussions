@@ -16,6 +16,7 @@ use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
+use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Throwable;
@@ -38,18 +39,20 @@ class MergeDiscussionHandler
     protected $events;
 
     /**
-     * @param UserRepository       $users
-     * @param DiscussionRepository $discussions
-     * @param Dispatcher           $events
+     * @var MergeDiscussionValidator
      */
+    protected $validator;
+
     public function __construct(
         UserRepository $users,
         DiscussionRepository $discussions,
-        Dispatcher $events
+        Dispatcher $events,
+        MergeDiscussionValidator $validator
     ) {
         $this->users = $users;
         $this->discussions = $discussions;
         $this->events = $events;
+        $this->validator = $validator;
     }
 
     public function handle(MergeDiscussion $command)
@@ -75,6 +78,10 @@ class MergeDiscussionHandler
                 $mergedPosts[] = $d->posts
             );
         }
+
+        $this->validator->assertValid([
+            'posts' => Arr::flatten($mergedPosts),
+        ]);
 
         $number = 0;
 

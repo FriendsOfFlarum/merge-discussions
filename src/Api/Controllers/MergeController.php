@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Api\Controllers;
 use Flarum\Api\Controller\AbstractShowController;
 use Flarum\Api\Serializer\DiscussionSerializer;
 use FoF\MergeDiscussions\Api\Commands\MergeDiscussion;
+use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Arr;
 use Psr\Http\Message\ServerRequestInterface;
@@ -34,11 +35,14 @@ class MergeController extends AbstractShowController
     protected $bus;
 
     /**
-     * @param Dispatcher $bus
+     * @var MergeDiscussionValidator
      */
-    public function __construct(Dispatcher $bus)
+    protected $validator;
+
+    public function __construct(Dispatcher $bus, MergeDiscussionValidator $validator)
     {
         $this->bus = $bus;
+        $this->validator = $validator;
     }
 
     /**
@@ -54,6 +58,11 @@ class MergeController extends AbstractShowController
         $actor = $request->getAttribute('actor');
         $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getParsedBody(), 'ids');
+
+        $this->validator->assertValid([
+            'discussion_id' => $discussion,
+            'merging_discussions' => $ids
+        ]);
 
         return $this->bus->dispatch(
             new MergeDiscussion($actor, $discussion, $ids)
