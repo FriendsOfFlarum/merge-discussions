@@ -178,7 +178,6 @@ export default class DiscussionMergeModal extends Modal {
                 const final = this.type() === 'target' ? this.discussion : this.merging[0];
 
                 if (app.current.matches(DiscussionPage)) {
-                    console.log('updating discussion page');
                     if (this.type() === 'target') {
                         await app.store.find('discussions', final.id());
 
