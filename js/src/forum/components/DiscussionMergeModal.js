@@ -56,11 +56,7 @@ export default class DiscussionMergeModal extends Modal {
                     </p>
 
                     <div className={classList('FormGroup', this.disabled() && 'hidden')}>
-                        {DiscussionSearch.component({
-                            state: this.search,
-                            onSelect: this.select.bind(this),
-                            ignore: this.discussion.id(),
-                        })}
+                        <DiscussionSearch state={this.search} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
                     </div>
 
                     <div className="Form-group MergeDiscussions-Discussions">
@@ -77,35 +73,34 @@ export default class DiscussionMergeModal extends Modal {
                         </ul>
                     </div>
                     <div className="Form-group MergeDiscussions-Preview">
-                        {Button.component(
-                            {
-                                className: 'Button Button--danger',
-                                onclick: this.loadPreview.bind(this),
-                                loading: this.loadingPreview,
-                                disabled: !this.discussion || !this.merging.length,
-                            },
-                            app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')
-                        )}
+                        <Button
+                            className="Button Button--danger"
+                            onclick={this.loadPreview.bind(this)}
+                            loading={this.loadingPreview}
+                            disabled={!this.discussion || !this.merging.length}
+                        >
+                            {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
+                        </Button>
+
                         {this.preview && (
                             <div className="MergeDiscussions-PostStream">
                                 <div className="Hero">
                                     <h2>{this.type() === 'target' ? this.discussion.title() : this.merging[0].title()}</h2>
                                 </div>
-                                <PostStream stream={this.preview} discussion={this.preview.discussion} />
+                                <PostStream stream={this.preview} discussion={this.preview.discussion} onPositionChange={() => {}} />
                             </div>
                         )}
                     </div>
                     <div className="Form-group">
-                        {Button.component(
-                            {
-                                className: 'Button Button--primary Button--block',
-                                type: 'submit',
-                                onclick: this.submit.bind(this),
-                                loading: this.loading,
-                                disabled: !this.discussion || !this.merging.length,
-                            },
-                            app.translator.trans('fof-merge-discussions.forum.modal.submit_button')
-                        )}
+                        <Button
+                            className="Button Button--primary Button--block"
+                            type="submit"
+                            onclick={this.submit.bind(this)}
+                            loading={this.loading}
+                            disabled={!this.discussion || !this.merging.length}
+                        >
+                            {app.translator.trans('fof-merge-discussions.forum.modal.submit_button')}
+                        </Button>
                     </div>
                 </div>
             </div>
