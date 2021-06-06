@@ -60,8 +60,8 @@ class MergeController extends AbstractShowController
         $ids = Arr::get($request->getParsedBody(), 'ids');
 
         $this->validator->assertValid([
-            'discussion_id' => $discussion,
-            'merging_discussions' => $ids
+            'discussion_id'       => $discussion,
+            'merging_discussions' => $ids,
         ]);
 
         return $this->bus->dispatch(
