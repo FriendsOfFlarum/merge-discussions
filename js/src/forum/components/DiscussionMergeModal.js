@@ -180,17 +180,22 @@ export default class DiscussionMergeModal extends Modal {
         return app
             .request(this.getRequestData())
             .then(async () => {
-                if (app.current.matches(DiscussionPage)) {
-                    if (this.type() === 'target') {
-                        await app.current.refresh();
+                const final = this.type() === 'target' ? this.discussion : this.merging[0];
 
-                        app.current.stream.update();
+                if (app.current.matches(DiscussionPage)) {
+                    console.log('updating discussion page');
+                    if (this.type() === 'target') {
+                        await app.store.find('discussions', final.id());
+
+                        await app.current.get('stream').update();
                     } else {
-                        m.route.set(app.route.discussion(this.merging[0]));
+                        m.route.set(app.route.discussion(final));
                     }
                 } else if (app.current.matches(IndexPage)) {
-                    await app.store.find('discussions', this.type() === 'target' ? this.discussion.id() : this.merging[0].id());
+                    await app.store.find('discussions', final.id());
                 }
+
+                console.log('removing old discussions');
 
                 if (this.type() === 'target') {
                     this.merging.forEach((d) => app.discussions.removeDiscussion(d));
@@ -198,11 +203,9 @@ export default class DiscussionMergeModal extends Modal {
                     app.discussions.removeDiscussion(this.discussion);
                 }
 
-                m.redraw();
-
                 app.modal.close();
             })
-            .catch(() => {})
+            .catch(console.error)
             .then(this.loaded.bind(this));
     }
 
