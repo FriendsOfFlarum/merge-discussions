@@ -16,6 +16,7 @@ use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
+use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Throwable;
@@ -38,18 +39,20 @@ class MergeDiscussionHandler
     protected $events;
 
     /**
-     * @param UserRepository       $users
-     * @param DiscussionRepository $discussions
-     * @param Dispatcher           $events
+     * @var MergeDiscussionValidator
      */
+    protected $validator;
+
     public function __construct(
         UserRepository $users,
         DiscussionRepository $discussions,
-        Dispatcher $events
+        Dispatcher $events,
+        MergeDiscussionValidator $validator
     ) {
         $this->users = $users;
         $this->discussions = $discussions;
         $this->events = $events;
+        $this->validator = $validator;
     }
 
     public function handle(MergeDiscussion $command)
@@ -76,6 +79,10 @@ class MergeDiscussionHandler
             );
         }
 
+        $this->validator->assertValid([
+            'posts' => Arr::flatten($mergedPosts),
+        ]);
+
         $number = 0;
 
         $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
@@ -93,7 +100,7 @@ class MergeDiscussionHandler
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
-            app('db.connection')->transaction(function () use ($discussions, $discussion) {
+            resolve('db.connection')->transaction(function () use ($discussions, $discussion) {
                 try {
                     $discussion->push();
                 } catch (Throwable $e) {
@@ -131,10 +138,10 @@ class MergeDiscussionHandler
 
     private function catchError(Throwable $e, string $type)
     {
-        $msg = app('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
+        $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
 
-        app('log')->error("[fof/merge-discussions] $msg");
-        app('log')->error($e);
+        resolve('log')->error("[fof/merge-discussions] $msg");
+        resolve('log')->error($e);
 
         throw new ValidationException([
             'fof/merge-discussions' => $msg,

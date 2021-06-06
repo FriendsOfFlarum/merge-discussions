@@ -1,10 +1,13 @@
-import DiscussionPage from 'flarum/components/DiscussionPage';
-import Button from 'flarum/components/Button';
-import Modal from 'flarum/components/Modal';
-import PostStream from 'flarum/components/PostStream';
-import PostStreamState from 'flarum/states/PostStreamState';
-import GlobalSearchState from 'flarum/states/GlobalSearchState';
-import Stream from 'flarum/utils/Stream';
+import app from 'flarum/forum/app';
+import DiscussionPage from 'flarum/forum/components/DiscussionPage';
+import IndexPage from 'flarum/forum/components/IndexPage';
+import Button from 'flarum/common/components/Button';
+import Modal from 'flarum/common/components/Modal';
+import PostStream from 'flarum/forum/components/PostStream';
+import PostStreamState from 'flarum/forum/states/PostStreamState';
+import GlobalSearchState from 'flarum/forum/states/GlobalSearchState';
+import Stream from 'flarum/common/utils/Stream';
+import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
 
@@ -52,15 +55,9 @@ export default class DiscussionMergeModal extends Modal {
                         })}
                     </p>
 
-                    {!this.disabled() && (
-                        <div className="Form-group">
-                            {DiscussionSearch.component({
-                                state: this.search,
-                                onSelect: this.select.bind(this),
-                                ignore: this.discussion.id(),
-                            })}
-                        </div>
-                    )}
+                    <div className={classList('FormGroup', this.disabled() && 'hidden')}>
+                        <DiscussionSearch state={this.search} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
+                    </div>
 
                     <div className="Form-group MergeDiscussions-Discussions">
                         <ul>
@@ -76,35 +73,34 @@ export default class DiscussionMergeModal extends Modal {
                         </ul>
                     </div>
                     <div className="Form-group MergeDiscussions-Preview">
-                        {Button.component(
-                            {
-                                className: 'Button Button--danger',
-                                onclick: this.loadPreview.bind(this),
-                                loading: this.loadingPreview,
-                                disabled: !this.discussion || !this.merging.length,
-                            },
-                            app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')
-                        )}
+                        <Button
+                            className="Button Button--danger"
+                            onclick={this.loadPreview.bind(this)}
+                            loading={this.loadingPreview}
+                            disabled={!this.discussion || !this.merging.length}
+                        >
+                            {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
+                        </Button>
+
                         {this.preview && (
                             <div className="MergeDiscussions-PostStream">
                                 <div className="Hero">
                                     <h2>{this.type() === 'target' ? this.discussion.title() : this.merging[0].title()}</h2>
                                 </div>
-                                <PostStream stream={this.preview} discussion={this.preview.discussion}></PostStream>
+                                <PostStream stream={this.preview} discussion={this.preview.discussion} onPositionChange={() => {}} />
                             </div>
                         )}
                     </div>
                     <div className="Form-group">
-                        {Button.component(
-                            {
-                                className: 'Button Button--primary Button--block',
-                                type: 'submit',
-                                onclick: this.submit.bind(this),
-                                loading: this.loading,
-                                disabled: !this.discussion || !this.merging.length,
-                            },
-                            app.translator.trans('fof-merge-discussions.forum.modal.submit_button')
-                        )}
+                        <Button
+                            className="Button Button--primary Button--block"
+                            type="submit"
+                            onclick={this.submit.bind(this)}
+                            loading={this.loading}
+                            disabled={!this.discussion || !this.merging.length}
+                        >
+                            {app.translator.trans('fof-merge-discussions.forum.modal.submit_button')}
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -179,15 +175,20 @@ export default class DiscussionMergeModal extends Modal {
         return app
             .request(this.getRequestData())
             .then(async () => {
+                const final = this.type() === 'target' ? this.discussion : this.merging[0];
+
                 if (app.current.matches(DiscussionPage)) {
                     if (this.type() === 'target') {
-                        await app.current.refresh();
+                        await app.store.find('discussions', final.id());
 
-                        app.current.stream.update();
+                        await app.current.get('stream').update();
                     } else {
-                        m.route.set(app.route.discussion(this.merging[0]));
+                        m.route.set(app.route.discussion(final));
                     }
+                } else if (app.current.matches(IndexPage)) {
+                    await app.store.find('discussions', final.id());
                 }
+
 
                 if (this.type() === 'target') {
                     this.merging.forEach((d) => app.discussions.removeDiscussion(d));
@@ -195,11 +196,9 @@ export default class DiscussionMergeModal extends Modal {
                     app.discussions.removeDiscussion(this.discussion);
                 }
 
-                m.redraw();
-
                 app.modal.close();
             })
-            .catch(() => {})
+            .catch(console.error)
             .then(this.loaded.bind(this));
     }
 

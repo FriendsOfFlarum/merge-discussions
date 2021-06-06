@@ -1,5 +1,5 @@
-import EventPost from 'flarum/components/EventPost';
-import punctuateSeries from 'flarum/helpers/punctuateSeries';
+import EventPost from 'flarum/forum/components/EventPost';
+import punctuateSeries from 'flarum/common/helpers/punctuateSeries';
 
 export default class DiscussionMergePost extends EventPost {
     /**
