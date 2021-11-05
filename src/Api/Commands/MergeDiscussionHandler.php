@@ -167,7 +167,7 @@ class MergeDiscussionHandler
             $discussion->posts[$i] = $post;
         });
 
-        $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
+        $discussion->setRelation('posts', $discussion->posts->sortBy('number'));
         $discussion->post_number_index = $number;
 
         resolve('db.connection')->transaction(function () use ($discussion) {
