@@ -63,6 +63,10 @@ class MergeDiscussionHandler
 
         $command->actor->assertCan('merge', $discussion);
 
+        if ($command->merge) {
+            $this->fixPostsNumber($discussion);
+        }
+
         $posts = $discussion->posts;
 
         foreach ($command->ids as $id) {
@@ -146,5 +150,44 @@ class MergeDiscussionHandler
         throw new ValidationException([
             'fof/merge-discussions' => $msg,
         ]);
+    }
+
+    private function fixPostsNumber(Discussion $discussion): void
+    {
+        $posts = $discussion->posts;
+        if ($posts->count() === $discussion->post_number_index) {
+            return;
+        }
+
+        $number = 0;
+
+        $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
+            $number++;
+            $post->number = $number;
+            $discussion->posts[$i] = $post;
+        });
+
+        $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
+        $discussion->post_number_index = $number;
+
+        resolve('db.connection')->transaction(function () use ($discussion) {
+            try {
+                $discussion->push();
+            } catch (Throwable $e) {
+                $this->catchError($e, 'fixing_posts_number');
+            }
+
+            try {
+                $discussion
+                    ->refresh()
+                    ->refreshCommentCount()
+                    ->refreshParticipantCount()
+                    ->refreshLastPost()
+                    ->setFirstPost($discussion->posts->first())
+                    ->save();
+            } catch (Throwable $e) {
+                $this->catchError($e, 'fixing_posts_number');
+            }
+        });
     }
 }
