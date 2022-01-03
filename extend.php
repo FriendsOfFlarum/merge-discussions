@@ -40,4 +40,7 @@ return [
         ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
             return $serializer->getActor()->can('merge', $discussion);
         }),
+
+    (new Extend\Settings())
+        ->serializeToForum('fof-merge-discussions.search_limit', 'fof-merge-discussions.search_limit', 'intVal', 4),
 ];
