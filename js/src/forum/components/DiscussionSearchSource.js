@@ -1,3 +1,4 @@
+import app from 'flarum/forum/app';
 import highlight from 'flarum/common/helpers/highlight';
 
 export default class DiscussionSearchSource {
@@ -10,12 +11,13 @@ export default class DiscussionSearchSource {
 
   search(query) {
     query = query.toLowerCase();
+    const limit = app.forum.attribute('fof-merge-discussions.search_limit') || 4;
 
     this.results.set(query, []);
 
     const params = {
       filter: { q: query },
-      page: { limit: 4 },
+      page: { limit },
     };
 
     const id = Number(query);
