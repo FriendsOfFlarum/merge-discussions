@@ -16,7 +16,8 @@ export default class DiscussionMergedNotification extends Notification {
   content() {
     const notification = this.attrs.notification;
     const user = notification.fromUser();
-    const oldTitle = notification.content();
+    const oldDiscussion = notification.content();
+    const oldTitle = oldDiscussion.merged_title;
 
     return app.translator.trans('fof-merge-discussions.forum.notification.discussion_merged', {
       user,

@@ -62,7 +62,10 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      */
     public function getData()
     {
-        return $this->mergedDiscussion->title;
+        return [
+            'merged_title' => $this->mergedDiscussion->title,
+            'merged_id' => $this->mergedDiscussion->id,
+        ];
     }
 
     /**
@@ -102,9 +105,10 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      */
     public function getEmailSubject(TranslatorInterface $translator)
     {
-        return $translator->trans('fof-merge-discussions.email.subject.merged', [
+        return $translator->trans('fof-merge-discussions.email.merged.subject', [
             '{display_name}'     => $this->actor->display_name,
             '{discussion_title}' => $this->discussion->title,
+            '{merged_discussion_title}' => $this->mergedDiscussion->title,
         ]);
     }
 }

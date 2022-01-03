@@ -14,6 +14,8 @@ fof-merge-discussions:
 
     notification:
       discussion_merged: Your discussion <b>{oldTitle}</b> was merged into this discussion by {username}.
+      preferences:
+        discussion_merged: A moderator merges one of my discussions with another
 
     discussion:
       merge: => fof-merge-discussions.ref.merge
@@ -37,3 +39,13 @@ fof-merge-discussions:
 
   ref:
     merge: Merge
+
+  email:
+    merged:
+      body: |
+        Hey {recipient_display_name},
+
+        Your discussion, {merged_discussion_title}, was merged into {discussion_title} by {actor_display_name}
+
+        View it here {discussion_url}
+      subject: Your discussion "{merged_discussion_title}" was merged
