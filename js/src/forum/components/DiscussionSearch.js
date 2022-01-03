@@ -3,21 +3,21 @@ import ItemList from 'flarum/common/utils/ItemList';
 import DiscussionSearchSource from './DiscussionSearchSource';
 
 export default class DiscussionSearch extends Search {
-    view() {
-        this.hasFocus = true;
+  view() {
+    this.hasFocus = true;
 
-        const vdom = super.view();
+    const vdom = super.view();
 
-        vdom.attrs.className = `MergeDiscussions-Search ${this.state.getValue() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
+    vdom.attrs.className = `MergeDiscussions-Search ${this.state.getValue() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
 
-        return vdom;
-    }
+    return vdom;
+  }
 
-    sourceItems() {
-        const items = new ItemList();
+  sourceItems() {
+    const items = new ItemList();
 
-        items.add('discussions', new DiscussionSearchSource(this.attrs.onSelect, this.attrs.ignore));
+    items.add('discussions', new DiscussionSearchSource(this.attrs.onSelect, this.attrs.ignore));
 
-        return items;
-    }
+    return items;
+  }
 }

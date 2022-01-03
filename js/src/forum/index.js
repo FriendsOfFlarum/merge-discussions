@@ -8,22 +8,22 @@ import DiscussionMergeModal from './components/DiscussionMergeModal';
 import DiscussionMergePost from './components/DiscussionMergePost';
 
 app.initializers.add('fof/merge-discussions', () => {
-    app.store.models.discussions.prototype.canMerge = Model.attribute('canMerge');
+  app.store.models.discussions.prototype.canMerge = Model.attribute('canMerge');
 
-    app.postComponents.discussionMerged = DiscussionMergePost;
+  app.postComponents.discussionMerged = DiscussionMergePost;
 
-    extend(DiscussionControls, 'moderationControls', function (items, discussion) {
-        if (!discussion.canMerge()) return;
+  extend(DiscussionControls, 'moderationControls', function (items, discussion) {
+    if (!discussion.canMerge()) return;
 
-        items.add(
-            'fof-merge',
-            Button.component(
-                {
-                    icon: 'fas fa-code-branch fa-flip-vertical',
-                    onclick: () => app.modal.show(DiscussionMergeModal, { discussion }),
-                },
-                app.translator.trans('fof-merge-discussions.forum.discussion.merge')
-            )
-        );
-    });
+    items.add(
+      'fof-merge',
+      Button.component(
+        {
+          icon: 'fas fa-code-branch fa-flip-vertical',
+          onclick: () => app.modal.show(DiscussionMergeModal, { discussion }),
+        },
+        app.translator.trans('fof-merge-discussions.forum.discussion.merge')
+      )
+    );
+  });
 });
