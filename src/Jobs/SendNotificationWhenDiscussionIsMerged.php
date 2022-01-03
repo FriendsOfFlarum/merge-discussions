@@ -51,7 +51,7 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
         foreach ($this->mergedDiscussions as $mergedDiscussion) {
             /** @var Discussion $mergedDiscussion */
             $user = User::find($mergedDiscussion->user_id);
-            
+
             if ($user) {
                 $notifications->sync(new DiscussionMergedBlueprint($this->discussion, $this->actor, $mergedDiscussion), [$user]);
             }
