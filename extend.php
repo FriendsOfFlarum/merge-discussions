@@ -34,7 +34,8 @@ return [
         ->type(DiscussionMergePost::class),
 
     (new Extend\Event())
-        ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class),
+        ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class)
+        ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class),
 
     (new Extend\ApiSerializer(DiscussionSerializer::class))
         ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
@@ -43,4 +44,10 @@ return [
 
     (new Extend\Settings())
         ->serializeToForum('fof-merge-discussions.search_limit', 'fof-merge-discussions.search_limit', 'intVal', 4),
+
+    (new Extend\View())
+        ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
+
+    (new Extend\Notification())
+        ->type(Notification\DiscussionMergedBlueprint::class, DiscussionSerializer::class, ['alert', 'email']),
 ];

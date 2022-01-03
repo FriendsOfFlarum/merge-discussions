@@ -12,6 +12,9 @@ fof-merge-discussions:
       load_preview_button: Preview
       submit_button: => fof-merge-discussions.ref.merge
 
+    notification:
+      discussion_merged: Your discussion <b>{oldTitle}</b> was merged into this discussion by {username}.
+
     discussion:
       merge: => fof-merge-discussions.ref.merge
 
