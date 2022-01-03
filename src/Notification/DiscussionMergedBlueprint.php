@@ -64,7 +64,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     {
         return [
             'merged_title' => $this->mergedDiscussion->title,
-            'merged_id' => $this->mergedDiscussion->id,
+            'merged_id'    => $this->mergedDiscussion->id,
         ];
     }
 
@@ -106,8 +106,8 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     public function getEmailSubject(TranslatorInterface $translator)
     {
         return $translator->trans('fof-merge-discussions.email.merged.subject', [
-            '{display_name}'     => $this->actor->display_name,
-            '{discussion_title}' => $this->discussion->title,
+            '{display_name}'            => $this->actor->display_name,
+            '{discussion_title}'        => $this->discussion->title,
             '{merged_discussion_title}' => $this->mergedDiscussion->title,
         ]);
     }
