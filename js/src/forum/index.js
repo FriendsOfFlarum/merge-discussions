@@ -6,6 +6,7 @@ import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
 
 import DiscussionMergeModal from './components/DiscussionMergeModal';
 import DiscussionMergePost from './components/DiscussionMergePost';
+import addNotifications from './addNotifications';
 
 app.initializers.add('fof/merge-discussions', () => {
   app.store.models.discussions.prototype.canMerge = Model.attribute('canMerge');
@@ -26,4 +27,6 @@ app.initializers.add('fof/merge-discussions', () => {
       )
     );
   });
+
+  addNotifications();
 });
