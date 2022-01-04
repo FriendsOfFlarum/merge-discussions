@@ -19,6 +19,8 @@ use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Events\Dispatcher;
 use Throwable;
 
@@ -66,42 +68,41 @@ class MergeDiscussionHandler
             $this->fixPostsNumber($discussion);
         }
 
+        /** @var Collection $discussions */
         $discussions = Discussion::query()
             ->with('posts')
             ->findMany($command->ids);
 
-        $posts = $discussions->pluck('posts')->flatten(1);
+        /** @var Collection $posts */
+        $posts = $discussions->pluck('posts')->flatten(1)
+            ->reject(function (Post $post) {
+                return $post->type === 'discussionTagged';
+            });
 
         $this->validator->assertValid([
             'posts' => $posts->toArray(),
         ]);
 
-        $number = 0;
+        // To avoid integrity constraint violations, we set the number here out of the potential range to begin with
+        $number = $discussion->posts->count() + $posts->count();
 
-        $discussion->setRelation(
-            'posts',
-            $discussion
-                ->posts
-                ->merge($posts)
-                ->sortBy('created_at')
-                ->map(function (Post $post) use (&$number, $discussion) {
-                    $number++;
-
-                    $post->number = $number;
-                    $post->discussion_id = $discussion->id;
-
-                    return $post;
-                })
-        );
-
-        $discussion->post_number_index = $number;
+        $discussion = $this->setRelationsAndMerge($discussion, $posts, $number);
 
         if ($command->merge) {
             resolve('db.connection')->transaction(function () use ($discussions, $discussion) {
                 try {
+                    // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
                     $discussion->push();
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'merging');
+                    $this->catchError($e, 'merging step 1');
+                }
+
+                try {
+                    // Now we renumber again, this time starting at 0
+                    $discussion = $this->setRelationsAndMerge($discussion, new SupportCollection());
+                    $discussion->push();
+                } catch (Throwable $e) {
+                    $this->catchError($e, 'merging step 2');
                 }
 
                 try {
@@ -184,5 +185,28 @@ class MergeDiscussionHandler
                 $this->catchError($e, 'fixing_posts_number');
             }
         });
+    }
+
+    private function setRelationsAndMerge(Discussion $discussion, SupportCollection $posts, int $number = 0): Discussion
+    {
+        $discussion->setRelation(
+            'posts',
+            $discussion
+                ->posts
+                ->merge($posts)
+                ->sortBy('created_at')
+                ->map(function (Post $post) use (&$number, $discussion) {
+                    $number++;
+
+                    $post->number = $number;
+                    $post->discussion_id = $discussion->id;
+
+                    return $post;
+                })
+        );
+
+        $discussion->post_number_index = $number;
+
+        return $discussion;
     }
 }
