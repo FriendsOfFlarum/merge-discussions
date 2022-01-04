@@ -14,8 +14,10 @@ namespace FoF\MergeDiscussions\Api\Commands;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
+use Flarum\Post\Post;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
+use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
@@ -58,8 +60,6 @@ class MergeDiscussionHandler
     public function handle(MergeDiscussion $command)
     {
         $discussion = $this->discussions->findOrFail($command->discussionId);
-        $discussions = [];
-        $mergedPosts = [];
 
         $command->actor->assertCan('merge', $discussion);
 
@@ -67,40 +67,30 @@ class MergeDiscussionHandler
             $this->fixPostsNumber($discussion);
         }
 
-        $posts = $discussion->posts;
+        $discussions = Discussion::query()
+            ->with('posts')
+            ->findMany($command->ids);
 
-        foreach ($command->ids as $id) {
-            $d = Discussion::find($id);
-
-            if ($d == null) {
-                continue;
-            }
-
-            $discussions[] = $d;
-
-            $posts = $posts->merge(
-                $mergedPosts[] = $d->posts
-            );
-        }
+        $posts = $discussions->pluck('posts')->flatten(1);
 
         $this->validator->assertValid([
-            'posts' => Arr::flatten($mergedPosts),
+            'posts' => $posts,
         ]);
 
         $number = 0;
 
-        $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
-            $number++;
+        $discussion->setRelation(
+            'posts',
+            $posts
+                ->merge($discussion->posts)
+                ->sortBy('created_at')
+                ->map(function (Post $post) use (&$number, $discussion) {
+                    $number++;
 
-            $post->number = $number;
-            $post->discussion_id = $discussion->id;
-
-            $discussion->posts[$i] = $post;
-        });
-
-        // @see https://github.com/FriendsOfFlarum/merge-discussions/issues/5
-        $discussion->setRelation('posts', $discussion->posts->sortByDesc('number'));
-
+                    $post->number = $number;
+                    $post->discussion_id = $discussion->id;
+                })
+        );
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
@@ -125,15 +115,17 @@ class MergeDiscussionHandler
 
                 try {
                     foreach ($discussions as $d) {
+                        Redirection::build($d, $discussion);
+
                         $d->delete();
                     }
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'deleting');
+                    $this->catchError($e, 'redirection + deleting');
                 }
             });
 
             $this->events->dispatch(
-                new DiscussionWasMerged($command->actor, Arr::flatten($mergedPosts), $discussion, $discussions)
+                new DiscussionWasMerged($command->actor, $posts->toArray(), $discussion, $discussions)
             );
         }
 
