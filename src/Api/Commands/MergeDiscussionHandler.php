@@ -20,8 +20,8 @@ use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Collection as SupportCollection;
 use Throwable;
 
 class MergeDiscussionHandler
