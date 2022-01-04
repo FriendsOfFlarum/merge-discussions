@@ -50,4 +50,7 @@ return [
 
     (new Extend\Notification())
         ->type(Notification\DiscussionMergedBlueprint::class, DiscussionSerializer::class, ['alert', 'email']),
+
+    (new Extend\Middleware('forum'))
+        ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
 ];
