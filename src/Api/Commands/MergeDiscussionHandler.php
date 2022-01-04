@@ -74,7 +74,7 @@ class MergeDiscussionHandler
         $posts = $discussions->pluck('posts')->flatten(1);
 
         $this->validator->assertValid([
-            'posts' => $posts,
+            'posts' => $posts->toArray(),
         ]);
 
         $number = 0;
@@ -125,7 +125,7 @@ class MergeDiscussionHandler
             });
 
             $this->events->dispatch(
-                new DiscussionWasMerged($command->actor, $posts->toArray(), $discussion, $discussions)
+                new DiscussionWasMerged($command->actor, $posts->toArray(), $discussion, $discussions->toArray())
             );
         }
 
