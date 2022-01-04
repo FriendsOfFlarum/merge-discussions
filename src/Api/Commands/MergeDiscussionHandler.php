@@ -20,7 +20,6 @@ use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Events\Dispatcher;
-use Illuminate\Support\Arr;
 use Throwable;
 
 class MergeDiscussionHandler
@@ -90,10 +89,11 @@ class MergeDiscussionHandler
 
                     $post->number = $number;
                     $post->discussion_id = $discussion->id;
+
                     return $post;
                 })
         );
-        
+
         $discussion->post_number_index = $number;
 
         if ($command->merge) {

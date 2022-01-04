@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of fof/merge-discussion.
+ * This file is part of fof/merge-discussions.
  *
  * Copyright (c) FriendsOfFlarum.
  *
