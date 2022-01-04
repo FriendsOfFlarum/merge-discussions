@@ -81,16 +81,19 @@ class MergeDiscussionHandler
 
         $discussion->setRelation(
             'posts',
-            $posts
-                ->merge($discussion->posts)
+            $discussion
+                ->posts
+                ->merge($posts)
                 ->sortBy('created_at')
                 ->map(function (Post $post) use (&$number, $discussion) {
                     $number++;
 
                     $post->number = $number;
                     $post->discussion_id = $discussion->id;
+                    return $post;
                 })
         );
+        
         $discussion->post_number_index = $number;
 
         if ($command->merge) {
@@ -125,7 +128,7 @@ class MergeDiscussionHandler
             });
 
             $this->events->dispatch(
-                new DiscussionWasMerged($command->actor, $posts->toArray(), $discussion, $discussions->toArray())
+                new DiscussionWasMerged($command->actor, $posts, $discussion, $discussions)
             );
         }
 

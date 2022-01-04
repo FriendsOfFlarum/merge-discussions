@@ -18,6 +18,7 @@ use FoF\MergeDiscussions\Notification\DiscussionMergedBlueprint;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 
 class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
 {
@@ -39,7 +40,7 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
      */
     protected $mergedDiscussions;
 
-    public function __construct(Discussion $discussion, array $mergedDiscussions, User $actor)
+    public function __construct(Discussion $discussion, Collection $mergedDiscussions, User $actor)
     {
         $this->discussion = $discussion;
         $this->mergedDiscussions = $mergedDiscussions;
