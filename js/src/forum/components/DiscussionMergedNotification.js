@@ -21,7 +21,7 @@ export default class DiscussionMergedNotification extends Notification {
 
     return app.translator.trans('fof-merge-discussions.forum.notification.discussion_merged', {
       user,
-      oldTitle
+      oldTitle,
     });
   }
 }

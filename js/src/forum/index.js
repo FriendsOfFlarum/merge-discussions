@@ -8,6 +8,8 @@ import DiscussionMergeModal from './components/DiscussionMergeModal';
 import DiscussionMergePost from './components/DiscussionMergePost';
 import addNotifications from './addNotifications';
 
+export * from './components';
+
 app.initializers.add('fof/merge-discussions', () => {
   app.store.models.discussions.prototype.canMerge = Model.attribute('canMerge');
 
