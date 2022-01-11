@@ -3,6 +3,12 @@ import ItemList from 'flarum/common/utils/ItemList';
 import DiscussionSearchSource from './DiscussionSearchSource';
 
 export default class DiscussionSearch extends Search {
+  oncreate(vnode) {
+    super.oncreate(vnode);
+console.log(this.attrs);
+    this.navigator.onSelect(this.attrs.onSelect);
+  }
+
   view() {
     this.hasFocus = true;
 
