@@ -32,6 +32,10 @@ export default class DiscussionMergeModal extends Modal {
     this.search = new GlobalSearchState();
   }
 
+  onready() {
+    this.$('.Search-input .FormControl').focus();
+  }
+
   title() {
     return app.translator.trans('fof-merge-discussions.forum.modal.title');
   }

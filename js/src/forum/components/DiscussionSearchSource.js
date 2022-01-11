@@ -47,12 +47,12 @@ export default class DiscussionSearchSource {
     return [
       results.map((discussion) => {
         return (
-          <li className="DiscussionSearchResult" data-index={'discussions' + discussion.id()}>
-            <a onclick={() => this.onSelect(discussion)}>
+          <li className="DiscussionSearchResult" data-index={'discussions' + discussion.id()} data-id={discussion.id()}>
+            <button className='Button--ua-reset' type='button' onclick={(e) => {e.stopPropagation(); this.onSelect(discussion);}}>
               <div className="DiscussionSearchResult-title">
                 <i>{highlight(discussion.id(), query)}</i> ~ {highlight(discussion.title(), query)}
               </div>
-            </a>
+            </button>
           </li>
         );
       }),
