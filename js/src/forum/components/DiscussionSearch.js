@@ -5,8 +5,11 @@ import DiscussionSearchSource from './DiscussionSearchSource';
 export default class DiscussionSearch extends Search {
   oncreate(vnode) {
     super.oncreate(vnode);
-console.log(this.attrs);
-    this.navigator.onSelect(this.attrs.onSelect);
+
+    this.navigator.onSelect(() => {
+      this.attrs.onSelect(app.store.getById('discussions', this.getItem(this.index).attr('data-id')));
+      m.redraw();
+    });
   }
 
   view() {
