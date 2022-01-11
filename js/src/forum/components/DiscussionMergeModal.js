@@ -16,8 +16,13 @@ export default class DiscussionMergeModal extends Modal {
     super.oninit(vnode);
 
     this.discussion = this.attrs.discussion;
+    
     this.type = Stream('target');
     this.merging = [];
+
+    if (this.attrs.preselect) {
+      this.merging.push(this.attrs.preselect);
+    }
 
     this.results = [];
     this.preview = null;
