@@ -10,13 +10,14 @@ import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
+import ItemList from 'flarum/common/utils/ItemList';
 
 export default class DiscussionMergeModal extends Modal {
   oninit(vnode) {
     super.oninit(vnode);
 
     this.discussion = this.attrs.discussion;
-    
+
     this.type = Stream('target');
     this.merging = [];
 
@@ -44,12 +45,16 @@ export default class DiscussionMergeModal extends Modal {
     return 'FoFMergeDiscussionsModal Modal--large';
   }
 
+  types() {
+    return ['target', 'from'];
+  }
+
   content() {
     return (
       <div className="Modal-body">
         <div className="Form">
           <div className="Form-group">
-            {['target', 'from'].map((key) => (
+            {this.types().map((key) => (
               <div>
                 <input type="radio" id={`type_${key}`} checked={this.type() === key} onclick={this.changeType.bind(this, key)} />
                 &nbsp;
