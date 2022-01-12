@@ -10,7 +10,6 @@ import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
-import ItemList from 'flarum/common/utils/ItemList';
 
 export default class DiscussionMergeModal extends Modal {
   oninit(vnode) {
