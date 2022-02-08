@@ -48,13 +48,15 @@ class MergeDiscussion
      * @param User $actor
      * @param $discussionId
      * @param int[] $ids
+     * @param $ordering
      * @param bool  $merge
      */
-    public function __construct(User $actor, $discussionId, $ids, $merge = true)
+    public function __construct(User $actor, $discussionId, $ids, $ordering = 'date', $merge = true)
     {
         $this->actor = $actor;
         $this->discussionId = (int) $discussionId;
         $this->ids = Arr::wrap($ids);
+        $this->ordering = $ordering;
         $this->merge = $merge;
     }
 }

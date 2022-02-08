@@ -11,6 +11,7 @@
 
 namespace FoF\MergeDiscussions;
 
+use Flarum\Api\Controller\ListPostsController;
 use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Database\AbstractModel;
 use Flarum\Extend;
@@ -28,7 +29,9 @@ return [
 
     (new Extend\Routes('api'))
         ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
-        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class)
+        ->remove('discussions.show')
+        ->get('/discussions/{id}', 'discussions.show', Api\Controllers\ShowDiscussionByNumberController::class),
 
     (new Extend\Post())
         ->type(DiscussionMergePost::class),
@@ -53,4 +56,7 @@ return [
 
     (new Extend\Middleware('forum'))
         ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
+
+    // (new Extend\ApiController(ListPostsController::class))
+    //     ->setSort(['number' => 'asc']),
 ];

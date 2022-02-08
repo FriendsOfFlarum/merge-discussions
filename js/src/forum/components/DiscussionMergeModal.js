@@ -10,6 +10,9 @@ import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
+import ItemList from 'flarum/common/utils/ItemList';
+import icon from 'flarum/common/helpers/icon';
+import Tooltip from 'flarum/common/components/Tooltip';
 
 export default class DiscussionMergeModal extends Modal {
   oninit(vnode) {
@@ -18,6 +21,7 @@ export default class DiscussionMergeModal extends Modal {
     this.discussion = this.attrs.discussion;
 
     this.type = Stream('target');
+    this.order = Stream('date');
     this.merging = [];
 
     if (this.attrs.preselect) {
@@ -48,19 +52,67 @@ export default class DiscussionMergeModal extends Modal {
     return ['target', 'from'];
   }
 
+  ordering() {
+    return ['date', 'suffix'];
+  }
+
+  typeItems() {
+    const items = new ItemList();
+
+    items.add('heading', <h3>{app.translator.trans('fof-merge-discussions.forum.modal.type_heading')}</h3>, 100);
+
+    let priority = 90;
+
+    this.types().map((key) => {
+      items.add(
+        `type_${key}`,
+        <div>
+          <input type="radio" id={`type_${key}`} checked={this.type() === key} onclick={this.changeType.bind(this, key)} />
+          &nbsp;
+          <label htmlFor={`type_${key}`}>{app.translator.trans(`fof-merge-discussions.forum.modal.type_${key}_label`)}</label>
+        </div>,
+        priority
+      );
+
+      priority = priority - 5;
+    });
+
+    return items;
+  }
+
+  orderItems() {
+    const items = new ItemList();
+
+    items.add('heading', <h3>{app.translator.trans('fof-merge-discussions.forum.modal.ordering_heading')}</h3>, 100);
+
+    let priority = 90;
+
+    this.ordering().map((key) => {
+      items.add(
+        `ordering_${key}`,
+        <div>
+          <input type="radio" id={`ordering_${key}`} checked={this.order() === key} onclick={this.changeOrdering.bind(this, key)} />
+          &nbsp;
+          <label htmlFor={`ordering_${key}`}>{app.translator.trans(`fof-merge-discussions.forum.modal.ordering_${key}_label`)}</label>
+          &nbsp;
+          <Tooltip text={app.translator.trans(`fof-merge-discussions.forum.modal.ordering_${key}_help`)}>{icon('fas fa-info-circle')}</Tooltip>
+        </div>,
+        priority
+      );
+
+      priority = priority - 5;
+    });
+
+    return items;
+  }
+
   content() {
     return (
       <div className="Modal-body">
         <div className="Form">
-          <div className="Form-group">
-            {this.types().map((key) => (
-              <div>
-                <input type="radio" id={`type_${key}`} checked={this.type() === key} onclick={this.changeType.bind(this, key)} />
-                &nbsp;
-                <label htmlFor={`type_${key}`}>{app.translator.trans(`fof-merge-discussions.forum.modal.type_${key}_label`)}</label>
-              </div>
-            ))}
-          </div>
+          <div className="Forum-group">{this.orderItems().toArray()}</div>
+
+          <div className="Form-group">{this.typeItems().toArray()}</div>
 
           <p className="help">
             {app.translator.trans(`fof-merge-discussions.forum.modal.type_${this.type()}_help_text`, {
@@ -145,6 +197,10 @@ export default class DiscussionMergeModal extends Modal {
     if (this.merging.length > 1) this.merging = [];
   }
 
+  changeOrdering(key) {
+    this.order(key);
+  }
+
   loadPreview() {
     this.loadingPreview = true;
 
@@ -218,15 +274,18 @@ export default class DiscussionMergeModal extends Modal {
     const isTarget = this.type() === 'target';
     const endpoint = isTarget ? this.discussion.apiEndpoint() : this.merging[0].apiEndpoint();
     const merging = isTarget ? this.merging.map((d) => d.id()) : this.discussion.id();
+    const ordering = this.order();
 
     return {
       method,
       url: `${app.forum.attribute('apiUrl')}${endpoint}/merge`,
       params: {
         ids: merging,
+        ordering,
       },
       body: {
         ids: merging,
+        ordering,
       },
       errorHandler: this.onerror.bind(this),
     };
