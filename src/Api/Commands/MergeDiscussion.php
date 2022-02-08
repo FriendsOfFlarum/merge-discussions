@@ -49,7 +49,7 @@ class MergeDiscussion
      * @param $discussionId
      * @param int[] $ids
      * @param $ordering
-     * @param bool  $merge
+     * @param bool $merge
      */
     public function __construct(User $actor, $discussionId, $ids, $ordering = 'date', $merge = true)
     {

@@ -92,7 +92,6 @@ class MergeDiscussionHandler
             $discussion = $this->setRelationsAndMergeByDate($discussion, $posts, $number);
         }
 
-
         if ($command->merge) {
             resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command) {
                 try {

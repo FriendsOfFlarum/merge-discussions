@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Api\Controllers;
 
 use Flarum\Api\Controller\ShowDiscussionController;
@@ -36,16 +45,16 @@ class ShowDiscussionByNumberController extends ShowDiscussionController
         }
 
         $this->loadRelations(new Collection([$discussion]), array_filter($include, function ($relationship) {
-            return ! Str::startsWith($relationship, 'posts');
+            return !Str::startsWith($relationship, 'posts');
         }), $request);
 
         return $discussion;
     }
 
     /**
-     * @param Discussion $discussion
+     * @param Discussion             $discussion
      * @param ServerRequestInterface $request
-     * @param array $include
+     * @param array                  $include
      */
     private function includePosts(Discussion $discussion, ServerRequestInterface $request, array $include)
     {
@@ -63,7 +72,8 @@ class ShowDiscussionByNumberController extends ShowDiscussionController
 
     /**
      * @param Discussion $discussion
-     * @param User $actor
+     * @param User       $actor
+     *
      * @return array
      */
     private function loadPostIds(Discussion $discussion, User $actor)
@@ -73,6 +83,7 @@ class ShowDiscussionByNumberController extends ShowDiscussionController
 
     /**
      * @param array $include
+     *
      * @return array
      */
     private function getPostRelationships(array $include)
@@ -93,6 +104,7 @@ class ShowDiscussionByNumberController extends ShowDiscussionController
      * @param ServerRequestInterface $request
      * @param Discussion$discussion
      * @param int $limit
+     *
      * @return int
      */
     private function getPostsOffset(ServerRequestInterface $request, Discussion $discussion, $limit)
@@ -112,10 +124,11 @@ class ShowDiscussionByNumberController extends ShowDiscussionController
 
     /**
      * @param Discussion $discussion
-     * @param User $actor
-     * @param int $offset
-     * @param int $limit
-     * @param array $include
+     * @param User       $actor
+     * @param int        $offset
+     * @param int        $limit
+     * @param array      $include
+     *
      * @return mixed
      */
     private function loadPosts($discussion, $actor, $offset, $limit, array $include)
