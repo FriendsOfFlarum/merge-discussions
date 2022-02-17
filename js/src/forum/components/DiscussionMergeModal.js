@@ -100,7 +100,7 @@ export default class DiscussionMergeModal extends Modal {
         priority
       );
 
-      priority = priority - 5;
+      priority -= 5;
     });
 
     return items;
