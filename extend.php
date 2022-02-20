@@ -11,7 +11,6 @@
 
 namespace FoF\MergeDiscussions;
 
-use Flarum\Api\Controller\ListPostsController;
 use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Database\AbstractModel;
 use Flarum\Extend;
