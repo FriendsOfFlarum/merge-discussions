@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Models;
 use Carbon\Carbon;
 use Flarum\Database\AbstractModel;
 use Flarum\Discussion\Discussion;
+use Flarum\Foundation\ValidationException;
 
 /**
  * @property int    $id
@@ -30,6 +31,10 @@ class Redirection extends AbstractModel
 
     public static function build(Discussion $request, Discussion $target, int $httpCode = 301): self
     {
+        if ($target->id === $request->id) {
+            throw new ValidationException(['error' => 'Redirecting to self!']);
+        }
+        
         $redirection = new self();
         $redirection->request_discussion_id = $request->id;
         $redirection->to_discussion_id = $target->id;
