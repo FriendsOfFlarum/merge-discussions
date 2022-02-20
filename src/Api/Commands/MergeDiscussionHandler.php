@@ -83,13 +83,17 @@ class MergeDiscussionHandler
             'posts' => $posts->toArray(),
         ]);
 
-        // To avoid integrity constraint violations, we set the number here out of the potential range to begin with
-        $number = $discussion->posts->count() + $posts->count();
+        if ($command->ordering === 'suffix') {
+            $discussion = $this->setRelationsAndMergeAppend($discussion, $posts);
+        } else {
+            // To avoid integrity constraint violations, we set the number here out of the potential range to begin with
+            $number = $discussion->posts->count() + $posts->count();
 
-        $discussion = $this->setRelationsAndMerge($discussion, $posts, $number);
+            $discussion = $this->setRelationsAndMergeByDate($discussion, $posts, $number);
+        }
 
         if ($command->merge) {
-            resolve('db.connection')->transaction(function () use ($discussions, $discussion) {
+            resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command) {
                 try {
                     // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
                     $discussion->push();
@@ -97,12 +101,14 @@ class MergeDiscussionHandler
                     $this->catchError($e, 'merging step 1');
                 }
 
-                try {
-                    // Now we renumber again, this time starting at 0
-                    $discussion = $this->setRelationsAndMerge($discussion, new SupportCollection());
-                    $discussion->push();
-                } catch (Throwable $e) {
-                    $this->catchError($e, 'merging step 2');
+                if ($command->ordering === 'date') {
+                    try {
+                        // Now we renumber again, this time starting at 0
+                        $discussion = $this->setRelationsAndMergeByDate($discussion, new SupportCollection());
+                        $discussion->push();
+                    } catch (Throwable $e) {
+                        $this->catchError($e, 'merging step 2');
+                    }
                 }
 
                 try {
@@ -187,7 +193,7 @@ class MergeDiscussionHandler
         });
     }
 
-    private function setRelationsAndMerge(Discussion $discussion, SupportCollection $posts, int $number = 0): Discussion
+    private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts, int $number = 0): Discussion
     {
         $discussion->setRelation(
             'posts',
@@ -206,6 +212,34 @@ class MergeDiscussionHandler
         );
 
         $discussion->post_number_index = $number;
+
+        return $discussion;
+    }
+
+    private function setRelationsAndMergeAppend(Discussion $discussion, SupportCollection $posts): Discussion
+    {
+        $number = $discussion->post_number_index;
+
+        $posts = $posts
+            ->sortBy('created_at')
+            ->map(function (Post $post) use (&$number, $discussion) {
+                $number++;
+
+                $post->number = $number;
+                $post->discussion_id = $discussion->id;
+
+                return $post;
+            });
+
+        $discussion->setRelation(
+            'posts',
+            $discussion
+                ->posts
+                ->merge($posts)
+                ->sortBy('number')
+        );
+
+        $discussion->post_number_index = $number + 1;
 
         return $discussion;
     }

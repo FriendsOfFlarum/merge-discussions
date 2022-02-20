@@ -58,6 +58,7 @@ class MergeController extends AbstractShowController
         $actor = $request->getAttribute('actor');
         $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getParsedBody(), 'ids');
+        $ordering = Arr::get($request->getParsedBody(), 'ordering');
 
         $this->validator->assertValid([
             'discussion_id'       => $discussion,
@@ -65,7 +66,7 @@ class MergeController extends AbstractShowController
         ]);
 
         return $this->bus->dispatch(
-            new MergeDiscussion($actor, $discussion, $ids)
+            new MergeDiscussion($actor, $discussion, $ids, $ordering)
         );
     }
 }

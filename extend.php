@@ -28,7 +28,9 @@ return [
 
     (new Extend\Routes('api'))
         ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
-        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class)
+        ->remove('discussions.show')
+        ->get('/discussions/{id}', 'discussions.show', Api\Controllers\ShowDiscussionByNumberController::class),
 
     (new Extend\Post())
         ->type(DiscussionMergePost::class),

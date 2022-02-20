@@ -17,7 +17,7 @@ export default class DiscussionSearch extends Search {
 
     const vdom = super.view();
 
-    vdom.attrs.className = `MergeDiscussions-Search ${this.state.getValue() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
+    vdom.attrs.className = `MergeDiscussions-Search ${this.searchState.getValue() && 'open'} ` + vdom.attrs.className.replace(/(focused|open)/g, '');
 
     return vdom;
   }
