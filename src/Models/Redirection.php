@@ -34,7 +34,7 @@ class Redirection extends AbstractModel
         if ($target->id === $request->id) {
             throw new ValidationException(['error' => 'Redirecting to self!']);
         }
-        
+
         $redirection = new self();
         $redirection->request_discussion_id = $request->id;
         $redirection->to_discussion_id = $target->id;
