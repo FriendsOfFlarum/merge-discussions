@@ -56,7 +56,4 @@ return [
 
     (new Extend\Middleware('forum'))
         ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
-
-    // (new Extend\ApiController(ListPostsController::class))
-    //     ->setSort(['number' => 'asc']),
 ];
