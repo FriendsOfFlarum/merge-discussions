@@ -64,7 +64,7 @@ class MergeDiscussionHandler
 
         $command->actor->assertCan('merge', $discussion);
 
-        if ($command->merge) {
+        if ($command->merge && $command->ordering === 'date') {
             $this->fixPostsNumber($discussion);
         }
 
@@ -188,7 +188,7 @@ class MergeDiscussionHandler
                     ->setFirstPost($discussion->posts->first())
                     ->save();
             } catch (Throwable $e) {
-                $this->catchError($e, 'fixing_posts_number');
+                $this->catchError($e, 'fixing_posts_number_meta');
             }
         });
     }
