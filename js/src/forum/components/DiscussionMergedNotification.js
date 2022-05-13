@@ -24,4 +24,8 @@ export default class DiscussionMergedNotification extends Notification {
       oldTitle,
     });
   }
+
+  excerpt() {
+    return null;
+  }
 }
