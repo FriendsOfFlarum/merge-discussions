@@ -157,7 +157,7 @@ class MergeDiscussionHandler
     private function fixPostsNumber(Discussion $discussion): void
     {
         $posts = $discussion->posts;
-        if ($posts->count() === $discussion->post_number_index) {
+        if ($posts->count() === $discussion->posts()->max('number')) {
             return;
         }
 
@@ -170,7 +170,6 @@ class MergeDiscussionHandler
         });
 
         $discussion->setRelation('posts', $discussion->posts->sortBy('number'));
-        $discussion->post_number_index = $number;
 
         resolve('db.connection')->transaction(function () use ($discussion) {
             try {
@@ -211,14 +210,12 @@ class MergeDiscussionHandler
                 })
         );
 
-        $discussion->post_number_index = $number;
-
         return $discussion;
     }
 
     private function setRelationsAndMergeAppend(Discussion $discussion, SupportCollection $posts): Discussion
     {
-        $number = $discussion->post_number_index;
+        $number = $discussion->posts()->max('number');
 
         $posts = $posts
             ->sortBy('created_at')
@@ -238,8 +235,6 @@ class MergeDiscussionHandler
                 ->merge($posts)
                 ->sortBy('number')
         );
-
-        $discussion->post_number_index = $number + 1;
 
         return $discussion;
     }
