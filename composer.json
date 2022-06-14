@@ -19,12 +19,17 @@
     }
   ],
   "require": {
-    "flarum/core": "^1.0.0"
+    "flarum/core": "^1.3.0"
   },
   "authors": [
     {
       "name": "David Sevilla Martín",
       "email": "me+fof@datitisev.me",
+      "role": "Developer"
+    },
+    {
+      "name": "IanM",
+      "email": "ian@blomstra.net",
       "role": "Developer"
     }
   ],

@@ -11,10 +11,10 @@
 
 namespace FoF\MergeDiscussions\Posts;
 
-use Flarum\Discussion\Discussion;
 use Flarum\Post\AbstractEventPost;
 use Flarum\Post\MergeableInterface;
 use Flarum\Post\Post;
+use Illuminate\Support\Collection;
 
 class DiscussionMergePost extends AbstractEventPost implements MergeableInterface
 {
@@ -40,17 +40,7 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
         return $this;
     }
 
-    /**
-     * Create a new instance in reply to a discussion.
-     *
-     * @param int          $discussionId
-     * @param int          $userId
-     * @param int          $postsCount
-     * @param Discussion[] $mergedDiscussions
-     *
-     * @return static
-     */
-    public static function reply($discussionId, $userId, $postsCount, $mergedDiscussions)
+    public static function reply(int $discussionId, int $userId, int $postsCount, Collection $mergedDiscussions): self
     {
         $post = new static();
 
@@ -62,19 +52,11 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
         return $post;
     }
 
-    /**
-     * Build the content attribute.
-     *
-     * @param int          $postsCount  Number of posts merged
-     * @param Discussion[] $discussions Merged discussions
-     *
-     * @return array
-     */
-    public static function buildContent($postsCount, $discussions)
+    public static function buildContent(int $postsCount, Collection $discussions): array
     {
         return [
             'count'  => (int) $postsCount,
-            'titles' => collect($discussions)->map(function ($d) {
+            'titles' => $discussions->map(function ($d) {
                 return $d->title;
             }),
         ];

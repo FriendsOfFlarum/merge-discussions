@@ -65,12 +65,13 @@ class MergePreviewController extends AbstractShowController
         $actor = $request->getAttribute('actor');
         $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getQueryParams(), 'ids');
+        $ordering = Arr::get($request->getQueryParams(), 'ordering');
 
         /**
          * @var Discussion
          */
         $discussion = $this->bus->dispatch(
-            new MergeDiscussion($actor, $discussion, $ids, false)
+            new MergeDiscussion($actor, $discussion, $ids, $ordering, false)
         );
 
         $discussion->setRelation('posts', $discussion->posts);

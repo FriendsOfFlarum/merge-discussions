@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Events;
 use Flarum\Discussion\Discussion;
 use Flarum\Post\Post;
 use Flarum\User\User;
+use Illuminate\Support\Collection;
 
 class DiscussionWasMerged
 {
@@ -23,7 +24,7 @@ class DiscussionWasMerged
     public $actor;
 
     /**
-     * @var Post[]
+     * @var Post[]|Collection
      */
     public $posts;
 
@@ -33,11 +34,11 @@ class DiscussionWasMerged
     public $discussion;
 
     /**
-     * @var Discussion[] Discussion
+     * @var Discussion[]|Collection Discussion
      */
     public $mergedDiscussions;
 
-    public function __construct(User $actor, $posts, $discussion, $mergedDiscussions)
+    public function __construct(User $actor, Collection $posts, Discussion $discussion, Collection $mergedDiscussions)
     {
         $this->actor = $actor;
         $this->posts = $posts;

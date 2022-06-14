@@ -28,16 +28,31 @@ return [
 
     (new Extend\Routes('api'))
         ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
-        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class)
+        ->remove('discussions.show')
+        ->get('/discussions/{id}', 'discussions.show', Api\Controllers\ShowDiscussionByNumberController::class),
 
     (new Extend\Post())
         ->type(DiscussionMergePost::class),
 
     (new Extend\Event())
-        ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class),
+        ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class)
+        ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class),
 
     (new Extend\ApiSerializer(DiscussionSerializer::class))
         ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
             return $serializer->getActor()->can('merge', $discussion);
         }),
+
+    (new Extend\Settings())
+        ->serializeToForum('fof-merge-discussions.search_limit', 'fof-merge-discussions.search_limit', 'intVal', 4),
+
+    (new Extend\View())
+        ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
+
+    (new Extend\Notification())
+        ->type(Notification\DiscussionMergedBlueprint::class, DiscussionSerializer::class, ['alert', 'email']),
+
+    (new Extend\Middleware('forum'))
+        ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
 ];
