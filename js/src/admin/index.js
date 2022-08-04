@@ -15,7 +15,6 @@ app.initializers.add('fof/merge-discussions', () => {
       label: app.translator.trans('fof-merge-discussions.admin.settings.search_result_label'),
       type: 'number',
       setting: 'fof-merge-discussions.search_limit',
-      placeholder: '4',
       help: app.translator.trans('fof-merge-discussions.admin.settings.search_result_help'),
       min: 1,
       max: 99,
