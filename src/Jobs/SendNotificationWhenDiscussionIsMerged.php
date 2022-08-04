@@ -18,6 +18,7 @@ use FoF\MergeDiscussions\Notification\DiscussionMergedBlueprint;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
@@ -36,7 +37,7 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
     protected $actor;
 
     /**
-     * @var Discussion[]
+     * @var Collection
      */
     protected $mergedDiscussions;
 
@@ -50,10 +51,10 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
     public function handle(NotificationSyncer $notifications): void
     {
         foreach ($this->mergedDiscussions as $mergedDiscussion) {
-            /** @var Discussion $mergedDiscussion */
-            $user = User::find($mergedDiscussion->user_id);
+            /** @var array $mergedDiscussion */
+            $user = User::find(Arr::get($mergedDiscussion, 'user_id'));
 
-            if ($user) {
+            if ($user && $user->id !== $this->actor->id) {
                 $notifications->sync(new DiscussionMergedBlueprint($this->discussion, $this->actor, $mergedDiscussion), [$user]);
             }
         }

@@ -15,6 +15,7 @@ use Flarum\Discussion\Discussion;
 use Flarum\Notification\Blueprint\BlueprintInterface;
 use Flarum\Notification\MailableInterface;
 use Flarum\User\User;
+use Illuminate\Support\Arr;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
@@ -30,11 +31,11 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     public $actor;
 
     /**
-     * @var Discussion
+     * @var array
      */
     public $mergedDiscussion;
 
-    public function __construct(Discussion $discussion, User $actor, Discussion $mergedDiscussion)
+    public function __construct(Discussion $discussion, User $actor, array $mergedDiscussion)
     {
         $this->discussion = $discussion;
         $this->actor = $actor;
@@ -63,8 +64,8 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     public function getData()
     {
         return [
-            'merged_title' => $this->mergedDiscussion->title,
-            'merged_id'    => $this->mergedDiscussion->id,
+            'merged_title' => Arr::get($this->mergedDiscussion, 'title'),
+            'merged_id'    => Arr::get($this->mergedDiscussion, 'id'),
         ];
     }
 
@@ -108,7 +109,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
         return $translator->trans('fof-merge-discussions.email.merged.subject', [
             '{display_name}'            => $this->actor->display_name,
             '{discussion_title}'        => $this->discussion->title,
-            '{merged_discussion_title}' => $this->mergedDiscussion->title,
+            '{merged_discussion_title}' => Arr::get($this->mergedDiscussion, 'title'),
         ]);
     }
 }
