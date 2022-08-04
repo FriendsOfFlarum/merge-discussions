@@ -23,8 +23,8 @@ class NotifyParticipantsWhenMerged
 
         foreach ($event->mergedDiscussions as $mergedDiscussion) {
             $mergedDiscussions->push([
-                'id' => $mergedDiscussion->id,
-                'title' => $mergedDiscussion->title,
+                'id'      => $mergedDiscussion->id,
+                'title'   => $mergedDiscussion->title,
                 'user_id' => $mergedDiscussion->user_id,
             ]);
         }
