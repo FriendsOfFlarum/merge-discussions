@@ -45,7 +45,8 @@ return [
         }),
 
     (new Extend\Settings())
-        ->serializeToForum('fof-merge-discussions.search_limit', 'fof-merge-discussions.search_limit', 'intVal', 4),
+        ->default('fof-merge-discussions.search_limit', 4)
+        ->serializeToForum('fof-merge-discussions.search_limit', 'fof-merge-discussions.search_limit', 'intVal'),
 
     (new Extend\View())
         ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
