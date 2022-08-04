@@ -36,7 +36,7 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
     protected $actor;
 
     /**
-     * @var Discussion[]
+     * @var Collection
      */
     protected $mergedDiscussions;
 
@@ -49,9 +49,15 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
 
     public function handle(NotificationSyncer $notifications): void
     {
+        /** @var \Psr\Log\LoggerInterface $log */
+        $log = resolve('log');
+        $log->info("Notifying that discussion {$this->discussion->id} has recieved a merge from " . $this->mergedDiscussions->pluck('id')->implode(',') . " - triggered by {$this->actor->id}");
+
         foreach ($this->mergedDiscussions as $mergedDiscussion) {
-            /** @var Discussion $mergedDiscussion */
-            $user = User::find($mergedDiscussion->user_id);
+            /** @var array $mergedDiscussion */
+            $user = User::find($mergedDiscussion['user_id']);
+            
+            $log->info("Notifying {$user->username} about merged discussion {$mergedDiscussion['id']}");
 
             if ($user) {
                 $notifications->sync(new DiscussionMergedBlueprint($this->discussion, $this->actor, $mergedDiscussion), [$user]);
