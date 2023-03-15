@@ -30,7 +30,6 @@ class Redirection implements MiddlewareInterface
         // In case of a valid 404 response start identifying whether we need to redirect.
         if ($response instanceof Response
             && $response->getStatusCode() === 404) {
-
             /** @var RouteCollection $routes */
             $routes = resolve('flarum.forum.routes');
 
