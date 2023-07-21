@@ -13,13 +13,16 @@ namespace FoF\MergeDiscussions\Api\Commands;
 
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
+use Flarum\Extension\ExtensionManager;
 use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Collection as SupportCollection;
 use Throwable;
@@ -46,16 +49,30 @@ class MergeDiscussionHandler
      */
     protected $validator;
 
+    /**
+     * @var ConnectionInterface
+     */
+    protected $connection;
+
+    /**
+     * @var ExtensionManager
+     */
+    protected $extensions;
+
     public function __construct(
         UserRepository $users,
         DiscussionRepository $discussions,
         Dispatcher $events,
-        MergeDiscussionValidator $validator
+        MergeDiscussionValidator $validator,
+        ConnectionInterface $connection,
+        ExtensionManager $extensions
     ) {
         $this->users = $users;
         $this->discussions = $discussions;
         $this->events = $events;
         $this->validator = $validator;
+        $this->connection = $connection;
+        $this->extensions = $extensions;
     }
 
     public function handle(MergeDiscussion $command)
@@ -93,7 +110,7 @@ class MergeDiscussionHandler
         }
 
         if ($command->merge) {
-            resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command) {
+            $this->connection->transaction(function () use ($discussions, $discussion, $command) {
                 try {
                     // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
                     $discussion->push();
@@ -121,6 +138,41 @@ class MergeDiscussionHandler
                         ->save();
                 } catch (Throwable $e) {
                     $this->catchError($e, 'updating');
+                }
+
+                // Users who were following the merged discussions should now follow the new one.
+                if ($this->extensions->isEnabled('flarum-subscriptions')) {
+                    // Move subscriptions to the new discussion.
+                    $this->connection->table('discussion_user')
+                        ->whereIn('discussion_id', $discussions->pluck('id'))
+                        ->where('subscription', 'follow')
+                        ->whereNotExists(function (Builder $query) use ($discussion) {
+                            $query->selectRaw(1)
+                                ->from('discussion_user', 'discussion_user2')
+                                ->where('discussion_user2.discussion_id', $discussion->id)
+                                ->whereColumn('discussion_user.user_id', 'discussion_user2.user_id');
+                        })
+                        ->update([
+                            'discussion_id' => $discussion->id,
+                            'last_read_post_number' => $discussion->last_post_number,
+                            'subscription' => 'follow',
+                        ]);
+
+                    // If the users have already read the new discussion, the query above will
+                    // not have moved their subscriptions. We need to update them manually.
+                    $this->connection->table('discussion_user')
+                        ->where('discussion_id', $discussion->id)
+                        ->whereNull('subscription')
+                        ->whereExists(function (Builder $query) use ($discussions) {
+                            $query->selectRaw(1)
+                                ->from('discussion_user', 'discussion_user2')
+                                ->whereIn('discussion_user2.discussion_id', $discussions->pluck('id'))
+                                ->whereColumn('discussion_user.user_id', 'discussion_user2.user_id')
+                                ->where('subscription', 'follow');
+                        })
+                        ->update([
+                            'subscription' => 'follow',
+                        ]);
                 }
 
                 try {
@@ -171,7 +223,7 @@ class MergeDiscussionHandler
 
         $discussion->setRelation('posts', $discussion->posts->sortBy('number'));
 
-        resolve('db.connection')->transaction(function () use ($discussion) {
+        $this->connection->transaction(function () use ($discussion) {
             try {
                 $discussion->push();
             } catch (Throwable $e) {
