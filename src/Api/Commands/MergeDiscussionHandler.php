@@ -17,6 +17,7 @@ use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
+use FoF\MergeDiscussions\Events\MergingDiscussions;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Database\Eloquent\Collection;
@@ -93,7 +94,7 @@ class MergeDiscussionHandler
         }
 
         if ($command->merge) {
-            resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command) {
+            resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command, $posts) {
                 try {
                     // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
                     $discussion->push();
@@ -110,6 +111,10 @@ class MergeDiscussionHandler
                         $this->catchError($e, 'merging step 2');
                     }
                 }
+
+                $this->events->dispatch(
+                    new MergingDiscussions($command->actor, $posts, $discussion, $discussions)
+                );
 
                 try {
                     $discussion
