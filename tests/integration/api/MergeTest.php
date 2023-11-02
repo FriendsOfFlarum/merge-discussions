@@ -39,30 +39,30 @@ class MergeTest extends TestCase
             ],
             'posts' => [
                 // Existing first posts for each discussion, spaced 4 hours apart
-                ['id' => 1, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 1 in Discussion 1', 'discussion_id' => 1, 'created_at' => Carbon::now()->subDays(5)->subHours(4)],
-                ['id' => 2, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 1 in Discussion 2', 'discussion_id' => 2, 'created_at' => Carbon::now()->subDays(4)->subHours(4)],
-                ['id' => 3, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 1 in Discussion 3', 'discussion_id' => 3, 'created_at' => Carbon::now()->subDays(3)->subHours(4)],
-                ['id' => 4, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 1 in Discussion 4', 'discussion_id' => 4, 'created_at' => Carbon::now()->subDays(2)->subHours(4)],
+                ['id' => 1, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 1 in Discussion 1', 'discussion_id' => 1, 'number' => 1, 'created_at' => Carbon::now()->subDays(5)->subHours(4)],
+                ['id' => 2, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 1 in Discussion 2', 'discussion_id' => 2, 'number' => 1, 'created_at' => Carbon::now()->subDays(4)->subHours(4)],
+                ['id' => 3, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 1 in Discussion 3', 'discussion_id' => 3, 'number' => 1, 'created_at' => Carbon::now()->subDays(3)->subHours(4)],
+                ['id' => 4, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 1 in Discussion 4', 'discussion_id' => 4, 'number' => 1, 'created_at' => Carbon::now()->subDays(2)->subHours(4)],
                 // Additional posts for Discussion 1, interleaved with Discussion 2
-                ['id' => 5, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 2 in Discussion 1', 'discussion_id' => 1, 'created_at' => Carbon::now()->subDays(4)->subHours(3)],
-                ['id' => 6, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 3 in Discussion 1', 'discussion_id' => 1, 'created_at' => Carbon::now()->subDays(3)->subHours(2)],
-                ['id' => 7, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 4 in Discussion 1', 'discussion_id' => 1, 'created_at' => Carbon::now()->subDays(2)->subHour()],
-                ['id' => 8, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 5 in Discussion 1', 'discussion_id' => 1, 'created_at' => Carbon::now()->subDays(1)],
+                ['id' => 5, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 2 in Discussion 1', 'discussion_id' => 1, 'number' => 2, 'created_at' => Carbon::now()->subDays(4)->subHours(3)],
+                ['id' => 6, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 3 in Discussion 1', 'discussion_id' => 1, 'number' => 3, 'created_at' => Carbon::now()->subDays(3)->subHours(2)],
+                ['id' => 7, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 4 in Discussion 1', 'discussion_id' => 1, 'number' => 4, 'created_at' => Carbon::now()->subDays(2)->subHour()],
+                ['id' => 8, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 5 in Discussion 1', 'discussion_id' => 1, 'number' => 5, 'created_at' => Carbon::now()->subDays(1)],
                 // Additional posts for Discussion 2, interleaved with Discussion 1 and 3
-                ['id' => 9, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 2 in Discussion 2', 'discussion_id' => 2, 'created_at' => Carbon::now()->subDays(4)->subHours(2)],
-                ['id' => 10, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 3 in Discussion 2', 'discussion_id' => 2, 'created_at' => Carbon::now()->subDays(3)->subHour()],
-                ['id' => 11, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 4 in Discussion 2', 'discussion_id' => 2, 'created_at' => Carbon::now()->subDays(2)],
-                ['id' => 12, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 5 in Discussion 2', 'discussion_id' => 2, 'created_at' => Carbon::now()->subDays(1)->subHours(3)],
+                ['id' => 9, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 2 in Discussion 2', 'discussion_id' => 2, 'number' => 2, 'created_at' => Carbon::now()->subDays(4)->subHours(2)],
+                ['id' => 10, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 3 in Discussion 2', 'discussion_id' => 2, 'number' => 3, 'created_at' => Carbon::now()->subDays(3)->subHour()],
+                ['id' => 11, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 4 in Discussion 2', 'discussion_id' => 2, 'number' => 4, 'created_at' => Carbon::now()->subDays(2)],
+                ['id' => 12, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 5 in Discussion 2', 'discussion_id' => 2, 'number' => 5, 'created_at' => Carbon::now()->subDays(1)->subHours(3)],
                 // Additional posts for Discussion 3, interleaved with Discussion 2 and 4
-                ['id' => 13, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 2 in Discussion 3', 'discussion_id' => 3, 'created_at' => Carbon::now()->subDays(3)->subHours(3)],
-                ['id' => 14, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 3 in Discussion 3', 'discussion_id' => 3, 'created_at' => Carbon::now()->subDays(2)->subHours(2)],
-                ['id' => 15, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 4 in Discussion 3', 'discussion_id' => 3, 'created_at' => Carbon::now()->subDay()->subHours(1)],
-                ['id' => 16, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 5 in Discussion 3', 'discussion_id' => 3, 'created_at' => Carbon::now()],
+                ['id' => 13, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 2 in Discussion 3', 'discussion_id' => 3, 'number' => 2, 'created_at' => Carbon::now()->subDays(3)->subHours(3)],
+                ['id' => 14, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 3 in Discussion 3', 'discussion_id' => 3, 'number' => 3, 'created_at' => Carbon::now()->subDays(2)->subHours(2)],
+                ['id' => 15, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 4 in Discussion 3', 'discussion_id' => 3, 'number' => 4, 'created_at' => Carbon::now()->subDay()->subHours(1)],
+                ['id' => 16, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 5 in Discussion 3', 'discussion_id' => 3, 'number' => 5, 'created_at' => Carbon::now()],
                 // Additional posts for Discussion 4, interleaved with Discussion 3
-                ['id' => 17, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 2 in Discussion 4', 'discussion_id' => 4, 'created_at' => Carbon::now()->subDays(2)->subHours(3)],
-                ['id' => 18, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 3 in Discussion 4', 'discussion_id' => 4, 'created_at' => Carbon::now()->subDay()->subHours(2)],
-                ['id' => 19, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 4 in Discussion 4', 'discussion_id' => 4, 'created_at' => Carbon::now()->subHours(1)],
-                ['id' => 20, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 5 in Discussion 4', 'discussion_id' => 4, 'created_at' => Carbon::now()->subHour()],
+                ['id' => 17, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 2 in Discussion 4', 'discussion_id' => 4, 'number' => 2, 'created_at' => Carbon::now()->subDays(2)->subHours(3)],
+                ['id' => 18, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 3 in Discussion 4', 'discussion_id' => 4, 'number' => 3, 'created_at' => Carbon::now()->subDay()->subHours(2)],
+                ['id' => 19, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 4 in Discussion 4', 'discussion_id' => 4, 'number' => 4, 'created_at' => Carbon::now()->subHours(1)],
+                ['id' => 20, 'user_id' => 3, 'type' => 'comment', 'content' => 'Post 5 in Discussion 4', 'discussion_id' => 4, 'number' => 5, 'created_at' => Carbon::now()->subHour()],
             ],
             'group_user' => [
                 ['user_id' => 3, 'group_id' => 4],
@@ -216,14 +216,24 @@ class MergeTest extends TestCase
         $this->assertEquals(5, $posts[4]->number);
 
         $this->assertEquals('Post 3 in Discussion 2', $posts[5]->content);
+        $this->assertEquals('comment', $posts[5]->type);
+        $this->assertEquals(6, $posts[5]->number);
 
         $this->assertEquals('Post 4 in Discussion 1', $posts[6]->content);
+        $this->assertEquals('comment', $posts[6]->type);
+        $this->assertEquals(7, $posts[6]->number);
 
         $this->assertEquals('Post 4 in Discussion 2', $posts[7]->content);
+        $this->assertEquals('comment', $posts[7]->type);
+        $this->assertEquals(8, $posts[7]->number);
 
         $this->assertEquals('Post 5 in Discussion 2', $posts[8]->content);
+        $this->assertEquals('comment', $posts[8]->type);
+        $this->assertEquals(9, $posts[8]->number);
 
         $this->assertEquals('Post 5 in Discussion 1', $posts[9]->content);
+        $this->assertEquals('comment', $posts[9]->type);    
+        $this->assertEquals(10, $posts[9]->number);
 
         $this->assertEquals('discussionMerged', $posts[10]->type);
         $this->assertEquals(11, $posts[10]->number);
@@ -275,30 +285,46 @@ class MergeTest extends TestCase
 
         $this->assertEquals("Post 1 in Discussion $to", $posts[0]->content);
         $this->assertEquals('comment', $posts[0]->type);
-        //$this->assertEquals(1, $posts[0]->number);
+        $this->assertEquals(1, $posts[0]->number);
 
         $this->assertEquals("Post 2 in Discussion $to", $posts[1]->content);
         $this->assertEquals('comment', $posts[1]->type);
-        //$this->assertEquals(2, $posts[1]->number);
+        $this->assertEquals(2, $posts[1]->number);
 
         $this->assertEquals("Post 3 in Discussion $to", $posts[2]->content);
+        $this->assertEquals('comment', $posts[2]->type);
+        $this->assertEquals(3, $posts[2]->number);
 
         $this->assertEquals("Post 4 in Discussion $to", $posts[3]->content);
+        $this->assertEquals('comment', $posts[3]->type);
+        $this->assertEquals(4, $posts[3]->number);
 
         $this->assertEquals("Post 5 in Discussion $to", $posts[4]->content);
+        $this->assertEquals('comment', $posts[4]->type);
+        $this->assertEquals(5, $posts[4]->number);
 
         $this->assertEquals("Post 1 in Discussion $from", $posts[5]->content);
+        $this->assertEquals('comment', $posts[5]->type);
+        $this->assertEquals(6, $posts[5]->number);
 
         $this->assertEquals("Post 2 in Discussion $from", $posts[6]->content);
+        $this->assertEquals('comment', $posts[6]->type);
+        $this->assertEquals(7, $posts[6]->number);
 
         $this->assertEquals("Post 3 in Discussion $from", $posts[7]->content);
+        $this->assertEquals('comment', $posts[7]->type);
+        $this->assertEquals(8, $posts[7]->number);
 
         $this->assertEquals("Post 4 in Discussion $from", $posts[8]->content);
+        $this->assertEquals('comment', $posts[8]->type);
+        $this->assertEquals(9, $posts[8]->number);
 
         $this->assertEquals("Post 5 in Discussion $from", $posts[9]->content);
+        $this->assertEquals('comment', $posts[9]->type);
+        $this->assertEquals(10, $posts[9]->number);
 
         $this->assertEquals('discussionMerged', $posts[10]->type);
-        //$this->assertEquals(11, $posts[10]->number);
+        $this->assertEquals(11, $posts[10]->number);
 
         // Test the merged discussion has a 301 redirect to the target discussion
 
@@ -309,4 +335,230 @@ class MergeTest extends TestCase
         $this->assertEquals(301, $response->getStatusCode());
         $this->assertEquals("/d/$to", $response->getHeader('Location')[0]);
     }
+
+    /**
+     * @test
+     */
+    public function can_merge_multiple_discussions_by_date()
+    {
+        $response = $this->send(
+            $this->request('POST', "/api/discussions/1/merge", [
+                'json' => [
+                    'ids'      => [2, 3],
+                    'ordering' => 'date',
+                ],
+                'authenticatedAs' => 3,
+            ])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        $this->assertArrayHasKey('data', $data);
+        $this->assertEquals(1, $data['data']['id']);
+
+        $discussion = Discussion::find(1);
+
+        $this->assertEquals(15, $discussion->comment_count);
+        $this->assertEquals(2, $discussion->participant_count);
+
+        $posts = $discussion->posts()->orderBy('created_at', 'asc')->get();
+
+        $this->assertEquals(16, $posts->count());
+
+        // Check the posts were ordered as expected by date/time
+        $this->assertEquals('Post 1 in Discussion 1', $posts[0]->content);
+        $this->assertEquals('comment', $posts[0]->type);
+        $this->assertEquals(1, $posts[0]->number);
+
+        $this->assertEquals('Post 1 in Discussion 2', $posts[1]->content);
+        $this->assertEquals('comment', $posts[1]->type);
+        $this->assertEquals(2, $posts[1]->number);
+
+        $this->assertEquals('Post 2 in Discussion 1', $posts[2]->content);
+        $this->assertEquals('comment', $posts[2]->type);
+        $this->assertEquals(3, $posts[2]->number);
+
+        $this->assertEquals('Post 2 in Discussion 2', $posts[3]->content);
+        $this->assertEquals('comment', $posts[3]->type);
+        $this->assertEquals(4, $posts[3]->number);
+
+        $this->assertEquals('Post 1 in Discussion 3', $posts[4]->content);
+        $this->assertEquals('comment', $posts[4]->type);
+        $this->assertEquals(5, $posts[4]->number);
+
+        $this->assertEquals('Post 2 in Discussion 3', $posts[5]->content);
+        $this->assertEquals('comment', $posts[5]->type);
+        $this->assertEquals(6, $posts[5]->number);
+
+        $this->assertEquals('Post 3 in Discussion 1', $posts[6]->content);
+        $this->assertEquals('comment', $posts[6]->type);
+        $this->assertEquals(7, $posts[6]->number);
+
+        $this->assertEquals('Post 3 in Discussion 2', $posts[7]->content);
+        $this->assertEquals('comment', $posts[7]->type);
+        $this->assertEquals(8, $posts[7]->number);
+
+        $this->assertEquals('Post 3 in Discussion 3', $posts[8]->content);
+        $this->assertEquals('comment', $posts[8]->type);
+        $this->assertEquals(9, $posts[8]->number);
+
+        $this->assertEquals('Post 4 in Discussion 1', $posts[9]->content);
+        $this->assertEquals('comment', $posts[9]->type);    
+        $this->assertEquals(10, $posts[9]->number);
+
+        $this->assertEquals('Post 4 in Discussion 2', $posts[10]->content);
+        $this->assertEquals('comment', $posts[10]->type);
+        $this->assertEquals(11, $posts[10]->number);
+
+        $this->assertEquals('Post 5 in Discussion 2', $posts[11]->content);
+        $this->assertEquals('comment', $posts[11]->type);
+        $this->assertEquals(12, $posts[11]->number);
+
+        $this->assertEquals('Post 4 in Discussion 3', $posts[12]->content);
+        $this->assertEquals('comment', $posts[12]->type);
+        $this->assertEquals(13, $posts[12]->number);
+
+        $this->assertEquals('Post 5 in Discussion 1', $posts[13]->content);
+        $this->assertEquals('comment', $posts[13]->type);
+        $this->assertEquals(14, $posts[13]->number);
+
+        $this->assertEquals('Post 5 in Discussion 3', $posts[14]->content);
+        $this->assertEquals('comment', $posts[14]->type);
+        $this->assertEquals(15, $posts[14]->number);
+
+        $this->assertEquals('discussionMerged', $posts[15]->type);
+        $this->assertEquals(16, $posts[15]->number);
+
+        // Test the merged discussion has a 301 redirect to the target discussion
+
+        $response = $this->send(
+            $this->request('GET', "/d/2", [])
+        );
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+
+        $response = $this->send(
+            $this->request('GET', "/d/3", [])
+        );
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+    }
+
+    // TODO: Fix this test
+    // /**
+    //  * @test
+    //  */
+    // public function can_merge_multiple_discussions_by_suffix()
+    // {
+    //     $response = $this->send(
+    //         $this->request('POST', "/api/discussions/1/merge", [
+    //             'json' => [
+    //                 'ids'      => [2, 3],
+    //                 'ordering' => 'suffix',
+    //             ],
+    //             'authenticatedAs' => 3,
+    //         ])
+    //     );
+
+    //     $this->assertEquals(200, $response->getStatusCode());
+
+    //     $data = json_decode($response->getBody()->getContents(), true);
+
+    //     $this->assertArrayHasKey('data', $data);
+    //     $this->assertEquals(1, $data['data']['id']);
+
+    //     $discussion = Discussion::find(1);
+
+    //     $this->assertEquals(15, $discussion->comment_count);
+    //     $this->assertEquals(2, $discussion->participant_count);
+
+    //     $posts = $discussion->posts()->get();
+
+    //     $this->assertEquals(16, $posts->count());
+
+    //     // check the posts were ordered as expected
+
+    //     $this->assertEquals("Post 1 in Discussion 1", $posts[0]->content);
+    //     $this->assertEquals('comment', $posts[0]->type);
+    //     $this->assertEquals(1, $posts[0]->number);
+
+    //     $this->assertEquals("Post 2 in Discussion 1", $posts[1]->content);
+    //     $this->assertEquals('comment', $posts[1]->type);
+    //     $this->assertEquals(2, $posts[1]->number);
+
+    //     $this->assertEquals("Post 3 in Discussion 1", $posts[2]->content);
+    //     $this->assertEquals('comment', $posts[2]->type);
+    //     $this->assertEquals(3, $posts[2]->number);
+
+    //     $this->assertEquals("Post 4 in Discussion 1", $posts[3]->content);
+    //     $this->assertEquals('comment', $posts[3]->type);
+    //     $this->assertEquals(4, $posts[3]->number);
+
+    //     $this->assertEquals("Post 5 in Discussion 1", $posts[4]->content);
+    //     $this->assertEquals('comment', $posts[4]->type);
+    //     $this->assertEquals(5, $posts[4]->number);
+
+    //     $this->assertEquals("Post 1 in Discussion 2", $posts[5]->content);
+    //     $this->assertEquals('comment', $posts[5]->type);
+    //     $this->assertEquals(6, $posts[5]->number);
+
+    //     $this->assertEquals("Post 2 in Discussion 2", $posts[6]->content);
+    //     $this->assertEquals('comment', $posts[6]->type);
+    //     $this->assertEquals(7, $posts[6]->number);
+
+    //     $this->assertEquals("Post 3 in Discussion 2", $posts[7]->content);
+    //     $this->assertEquals('comment', $posts[7]->type);
+    //     $this->assertEquals(8, $posts[7]->number);
+        
+    //     $this->assertEquals("Post 4 in Discussion 2", $posts[8]->content);
+    //     $this->assertEquals('comment', $posts[8]->type);
+    //     $this->assertEquals(9, $posts[8]->number);
+
+    //     $this->assertEquals("Post 5 in Discussion 2", $posts[9]->content);
+    //     $this->assertEquals('comment', $posts[9]->type);
+    //     $this->assertEquals(10, $posts[9]->number);
+
+    //     $this->assertEquals("Post 1 in Discussion 3", $posts[10]->content);
+    //     $this->assertEquals('comment', $posts[10]->type);
+    //     $this->assertEquals(11, $posts[10]->number);
+
+    //     $this->assertEquals("Post 2 in Discussion 3", $posts[11]->content);
+    //     $this->assertEquals('comment', $posts[11]->type);
+    //     $this->assertEquals(12, $posts[11]->number);
+
+    //     $this->assertEquals("Post 3 in Discussion 3", $posts[12]->content);
+    //     $this->assertEquals('comment', $posts[12]->type);
+    //     $this->assertEquals(13, $posts[12]->number);
+
+    //     $this->assertEquals("Post 4 in Discussion 3", $posts[13]->content);
+    //     $this->assertEquals('comment', $posts[13]->type);
+    //     $this->assertEquals(14, $posts[13]->number);
+
+    //     $this->assertEquals("Post 5 in Discussion 3", $posts[14]->content);
+    //     $this->assertEquals('comment', $posts[14]->type);
+    //     $this->assertEquals(15, $posts[14]->number);
+
+    //     $this->assertEquals('discussionMerged', $posts[15]->type);
+    //     $this->assertEquals(16, $posts[15]->number);
+
+    //     // Test the merged discussion has a 301 redirect to the target discussion
+
+    //     $response = $this->send(
+    //         $this->request('GET', "/d/2", [])
+    //     );
+
+    //     $this->assertEquals(301, $response->getStatusCode());
+    //     $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+
+    //     $response = $this->send(
+    //         $this->request('GET', "/d/3", [])
+    //     );
+
+    //     $this->assertEquals(301, $response->getStatusCode());
+    //     $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+    // }
 }
