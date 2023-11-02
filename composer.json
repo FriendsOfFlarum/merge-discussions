@@ -1,55 +1,70 @@
 {
-  "name": "fof/merge-discussions",
-  "description": "Merge two or more discussions into one",
-  "keywords": [
-    "flarum"
-  ],
-  "type": "flarum-extension",
-  "license": "MIT",
-  "support": {
-    "issues": "https://github.com/FriendsOfFlarum/merge-discussions/issues",
-    "source": "https://github.com/FriendsOfFlarum/merge-discussions",
-    "forum": "https://discuss.flarum.org/d/19460"
-  },
-  "homepage": "https://friendsofflarum.org",
-  "funding": [
-    {
-      "type": "website",
-      "url": "https://opencollective.com/fof/donate"
-    }
-  ],
-  "require": {
-    "flarum/core": "^1.8.0"
-  },
-  "authors": [
-    {
-      "name": "David Sevilla Martín",
-      "email": "me+fof@datitisev.me",
-      "role": "Developer"
+    "name": "fof/merge-discussions",
+    "description": "Merge two or more discussions into one",
+    "keywords": [
+        "flarum"
+    ],
+    "type": "flarum-extension",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/FriendsOfFlarum/merge-discussions/issues",
+        "source": "https://github.com/FriendsOfFlarum/merge-discussions",
+        "forum": "https://discuss.flarum.org/d/19460"
     },
-    {
-      "name": "IanM",
-      "email": "ian@blomstra.net",
-      "role": "Developer"
-    }
-  ],
-  "autoload": {
-    "psr-4": {
-      "FoF\\MergeDiscussions\\": "src/"
-    }
-  },
-  "extra": {
-    "flarum-extension": {
-      "title": "FoF Merge Discussions",
-      "category": "feature",
-      "icon": {
-        "name": "fas fa-code-branch fa-flip-vertical",
-        "backgroundColor": "#e74c3c",
-        "color": "#fff"
-      }
+    "homepage": "https://friendsofflarum.org",
+    "funding": [
+        {
+            "type": "website",
+            "url": "https://opencollective.com/fof/donate"
+        }
+    ],
+    "require": {
+        "flarum/core": "^1.8.0"
     },
-    "flagrow": {
-      "discuss": "https://discuss.flarum.org/d/19460"
-    }
+    "authors": [
+        {
+            "name": "David Sevilla Martín",
+            "email": "me+fof@datitisev.me",
+            "role": "Developer"
+        },
+        {
+            "name": "IanM",
+            "email": "ian@blomstra.net",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "FoF\\MergeDiscussions\\": "src/"
+        }
+    },
+    "extra": {
+        "flarum-extension": {
+            "title": "FoF Merge Discussions",
+            "category": "feature",
+            "icon": {
+                "name": "fas fa-code-branch fa-flip-vertical",
+                "backgroundColor": "#e74c3c",
+                "color": "#fff"
+            }
+        },
+        "flagrow": {
+            "discuss": "https://discuss.flarum.org/d/19460"
+        },
+        "flarum-cli": {
+            "modules": {
+                "githubActions": true
+            }
+        }
+    },
+    "require-dev": {
+        "flarum/phpstan": "*"
+    },
+    "scripts": {
+      "analyse:phpstan": "phpstan analyse",
+      "clear-cache:phpstan": "phpstan clear-result-cache"
+  },
+  "scripts-descriptions": {
+      "analyse:phpstan": "Run static analysis"
   }
 }

@@ -11,6 +11,7 @@
 
 namespace FoF\MergeDiscussions\Posts;
 
+use Carbon\Carbon;
 use Flarum\Post\AbstractEventPost;
 use Flarum\Post\MergeableInterface;
 use Flarum\Post\Post;
@@ -45,7 +46,7 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
         $post = new static();
 
         $post->content = static::buildContent($postsCount, $mergedDiscussions);
-        $post->created_at = time();
+        $post->created_at = Carbon::now();
         $post->discussion_id = $discussionId;
         $post->user_id = $userId;
 

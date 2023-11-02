@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace FoF\MergeDiscussions\Api\Commands;
+namespace FoF\MergeDiscussions\Commands;
 
 use Flarum\User\User;
 use Illuminate\Support\Arr;
@@ -36,6 +36,13 @@ class MergeDiscussion
      * @var int[]
      */
     public $ids;
+
+    /**
+     * The merge ordering.
+     *
+     * @var string
+     */
+    public $ordering;
 
     /**
      * @var bool Save merged discussion to database
