@@ -1,12 +1,20 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Tests\integration\api;
 
 use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
-use FoF\MergeDiscussions\Models\Redirection;
 
 class MergeTest extends TestCase
 {
@@ -24,10 +32,10 @@ class MergeTest extends TestCase
                 ['id' => 3, 'username' => 'moderator', 'email' => 'moderator@machine.local', 'password' => '$2y$10$LO59tiT7uggl6Oe23o/O6.utnF6ipngYjvMvaxo1TciKqBttDNKim', 'is_email_confirmed' => true],
             ],
             'discussions' => [
-                ['id' => 1, 'title' => "Discussion 1", 'comment_count' => 5, 'user_id' => 1, 'created_at' => Carbon::now()->subDays(5), 'first_post_id' => 1],
-                ['id' => 2, 'title' => "Discussion 2", 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(4), 'first_post_id' => 2],
-                ['id' => 3, 'title' => "Discussion 3", 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(3), 'first_post_id' => 3],
-                ['id' => 4, 'title' => "Discussion 4", 'comment_count' => 5, 'user_id' => 3, 'created_at' => Carbon::now()->subDays(2), 'first_post_id' => 4],
+                ['id' => 1, 'title' => 'Discussion 1', 'comment_count' => 5, 'user_id' => 1, 'created_at' => Carbon::now()->subDays(5), 'first_post_id' => 1],
+                ['id' => 2, 'title' => 'Discussion 2', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(4), 'first_post_id' => 2],
+                ['id' => 3, 'title' => 'Discussion 3', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(3), 'first_post_id' => 3],
+                ['id' => 4, 'title' => 'Discussion 4', 'comment_count' => 5, 'user_id' => 3, 'created_at' => Carbon::now()->subDays(2), 'first_post_id' => 4],
             ],
             'posts' => [
                 // Existing first posts for each discussion, spaced 4 hours apart
@@ -72,7 +80,7 @@ class MergeTest extends TestCase
     {
         $response = $this->send(
             $this->request('POST', '/api/discussions/1/merge', [
-                'json' => [],
+                'json'            => [],
                 'authenticatedAs' => 1,
             ])
         );
@@ -149,12 +157,13 @@ class MergeTest extends TestCase
     {
         return [
             [1, 2],
-            [2, 1]
+            [2, 1],
         ];
     }
 
     /**
      * @test
+     *
      * @dataProvider discussionMergeData
      */
     public function can_merge_discussions_by_date(int $to, int $from)
@@ -162,8 +171,8 @@ class MergeTest extends TestCase
         $response = $this->send(
             $this->request('POST', "/api/discussions/$to/merge", [
                 'json' => [
-                    'ids' => [$from],
-                    'ordering' => 'date'
+                    'ids'      => [$from],
+                    'ordering' => 'date',
                 ],
                 'authenticatedAs' => 3,
             ])
@@ -186,37 +195,37 @@ class MergeTest extends TestCase
         $this->assertEquals(11, $posts->count());
 
         // Check the posts were ordered as expected by date/time
-        $this->assertEquals("Post 1 in Discussion 1", $posts[0]->content);
-        $this->assertEquals("comment", $posts[0]->type);
+        $this->assertEquals('Post 1 in Discussion 1', $posts[0]->content);
+        $this->assertEquals('comment', $posts[0]->type);
         $this->assertEquals(1, $posts[0]->number);
 
-        $this->assertEquals("Post 1 in Discussion 2", $posts[1]->content);
-        $this->assertEquals("comment", $posts[1]->type);
+        $this->assertEquals('Post 1 in Discussion 2', $posts[1]->content);
+        $this->assertEquals('comment', $posts[1]->type);
         $this->assertEquals(2, $posts[1]->number);
 
-        $this->assertEquals("Post 2 in Discussion 1", $posts[2]->content);
-        $this->assertEquals("comment", $posts[2]->type);
+        $this->assertEquals('Post 2 in Discussion 1', $posts[2]->content);
+        $this->assertEquals('comment', $posts[2]->type);
         $this->assertEquals(3, $posts[2]->number);
 
-        $this->assertEquals("Post 2 in Discussion 2", $posts[3]->content);
-        $this->assertEquals("comment", $posts[3]->type);
+        $this->assertEquals('Post 2 in Discussion 2', $posts[3]->content);
+        $this->assertEquals('comment', $posts[3]->type);
         $this->assertEquals(4, $posts[3]->number);
 
-        $this->assertEquals("Post 3 in Discussion 1", $posts[4]->content);
-        $this->assertEquals("comment", $posts[4]->type);
+        $this->assertEquals('Post 3 in Discussion 1', $posts[4]->content);
+        $this->assertEquals('comment', $posts[4]->type);
         $this->assertEquals(5, $posts[4]->number);
 
-        $this->assertEquals("Post 3 in Discussion 2", $posts[5]->content);
+        $this->assertEquals('Post 3 in Discussion 2', $posts[5]->content);
 
-        $this->assertEquals("Post 4 in Discussion 1", $posts[6]->content);
+        $this->assertEquals('Post 4 in Discussion 1', $posts[6]->content);
 
-        $this->assertEquals("Post 4 in Discussion 2", $posts[7]->content);
+        $this->assertEquals('Post 4 in Discussion 2', $posts[7]->content);
 
-        $this->assertEquals("Post 5 in Discussion 2", $posts[8]->content);
+        $this->assertEquals('Post 5 in Discussion 2', $posts[8]->content);
 
-        $this->assertEquals("Post 5 in Discussion 1", $posts[9]->content);
+        $this->assertEquals('Post 5 in Discussion 1', $posts[9]->content);
 
-        $this->assertEquals("discussionMerged", $posts[10]->type);
+        $this->assertEquals('discussionMerged', $posts[10]->type);
         $this->assertEquals(11, $posts[10]->number);
 
         // Test the merged discussion has a 301 redirect to the target discussion
@@ -231,6 +240,7 @@ class MergeTest extends TestCase
 
     /**
      * @test
+     *
      * @dataProvider discussionMergeData
      */
     public function can_merge_discussions_by_suffix(int $to, int $from)
@@ -238,8 +248,8 @@ class MergeTest extends TestCase
         $response = $this->send(
             $this->request('POST', "/api/discussions/$to/merge", [
                 'json' => [
-                    'ids' => [$from],
-                    'ordering' => 'suffix'
+                    'ids'      => [$from],
+                    'ordering' => 'suffix',
                 ],
                 'authenticatedAs' => 3,
             ])
@@ -264,11 +274,11 @@ class MergeTest extends TestCase
         // check the posts were ordered as expected
 
         $this->assertEquals("Post 1 in Discussion $to", $posts[0]->content);
-        $this->assertEquals("comment", $posts[0]->type);
+        $this->assertEquals('comment', $posts[0]->type);
         //$this->assertEquals(1, $posts[0]->number);
 
         $this->assertEquals("Post 2 in Discussion $to", $posts[1]->content);
-        $this->assertEquals("comment", $posts[1]->type);
+        $this->assertEquals('comment', $posts[1]->type);
         //$this->assertEquals(2, $posts[1]->number);
 
         $this->assertEquals("Post 3 in Discussion $to", $posts[2]->content);
@@ -287,7 +297,7 @@ class MergeTest extends TestCase
 
         $this->assertEquals("Post 5 in Discussion $from", $posts[9]->content);
 
-        $this->assertEquals("discussionMerged", $posts[10]->type);
+        $this->assertEquals('discussionMerged', $posts[10]->type);
         //$this->assertEquals(11, $posts[10]->number);
 
         // Test the merged discussion has a 301 redirect to the target discussion

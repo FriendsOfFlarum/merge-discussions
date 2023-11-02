@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Tests\integration\api;
 
 use Carbon\Carbon;
@@ -12,8 +21,9 @@ trait CreatesLargeDiscussions
     /**
      * Create multiple discussions with a specified number of posts each.
      *
-     * @param int $discussionCount The number of discussions to create
+     * @param int $discussionCount    The number of discussions to create
      * @param int $postsPerDiscussion The number of posts per discussion
+     *
      * @return array The created discussions
      */
     protected function createDiscussionsWithPosts(int $discussionCount, int $postsPerDiscussion): array
@@ -21,10 +31,10 @@ trait CreatesLargeDiscussions
         $discussions = [];
         for ($i = 1; $i <= $discussionCount; $i++) {
             $discussionData = [
-                'title' => "Discussion $i",
+                'title'         => "Discussion $i",
                 'comment_count' => $postsPerDiscussion,
-                'user_id' => 2,
-                'created_at' => Carbon::now()->subDays($discussionCount - $i),
+                'user_id'       => 2,
+                'created_at'    => Carbon::now()->subDays($discussionCount - $i),
             ];
 
             Discussion::unguard();
@@ -36,10 +46,10 @@ trait CreatesLargeDiscussions
                 Post::unguard();
                 $post = Post::create([
                     'discussion_id' => $discussion->id,
-                    'user_id' => 2,
-                    'type' => 'comment',
-                    'content' => "Post $j in Discussion $i",
-                    'created_at' => Carbon::now()->subDays($postsPerDiscussion - $j),
+                    'user_id'       => 2,
+                    'type'          => 'comment',
+                    'content'       => "Post $j in Discussion $i",
+                    'created_at'    => Carbon::now()->subDays($postsPerDiscussion - $j),
                 ]);
                 $post->save();
                 Post::reguard();
