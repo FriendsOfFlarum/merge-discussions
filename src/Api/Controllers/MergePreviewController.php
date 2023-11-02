@@ -16,6 +16,7 @@ use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Discussion\Discussion;
 use Flarum\Http\RequestUtil;
 use FoF\MergeDiscussions\Commands\MergeDiscussion;
+use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Arr;
 use Psr\Http\Message\ServerRequestInterface;
@@ -34,6 +35,11 @@ class MergePreviewController extends AbstractShowController
     protected $bus;
 
     /**
+     * @var MergeDiscussionValidator
+     */
+    protected $validator;
+
+    /**
      * {@inheritdoc}
      */
     public $include = [
@@ -48,9 +54,10 @@ class MergePreviewController extends AbstractShowController
     /**
      * @param Dispatcher $bus
      */
-    public function __construct(Dispatcher $bus)
+    public function __construct(Dispatcher $bus, MergeDiscussionValidator $validator)
     {
         $this->bus = $bus;
+        $this->validator = $validator;
     }
 
     /**
@@ -67,6 +74,11 @@ class MergePreviewController extends AbstractShowController
         $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getQueryParams(), 'ids');
         $ordering = Arr::get($request->getQueryParams(), 'ordering');
+
+        $this->validator->assertValid([
+            'discussion_id'       => $discussion,
+            'merging_discussions' => $ids,
+        ]);
 
         /**
          * @var Discussion
