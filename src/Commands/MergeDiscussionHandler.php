@@ -99,7 +99,7 @@ class MergeDiscussionHandler
                     // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
                     $discussion->push();
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'merging step 1');
+                    $this->catchError($e, 'merging step 1: '.$e->getMessage());
                 }
 
                 if ($command->ordering === 'date') {
@@ -108,7 +108,7 @@ class MergeDiscussionHandler
                         $discussion = $this->setRelationsAndMergeByDate($discussion, new SupportCollection());
                         $discussion->push();
                     } catch (Throwable $e) {
-                        $this->catchError($e, 'merging step 2');
+                        $this->catchError($e, 'merging step 2: '.$e->getMessage());
                     }
                 }
 
@@ -125,7 +125,7 @@ class MergeDiscussionHandler
                         ->setFirstPost($discussion->posts->first())
                         ->save();
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'updating');
+                    $this->catchError($e, 'updating: '.$e->getMessage());
                 }
 
                 try {
@@ -135,7 +135,7 @@ class MergeDiscussionHandler
                         $d->delete();
                     }
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'redirection + deleting');
+                    $this->catchError($e, 'redirection + deleting: '.$e->getMessage());
                 }
             });
 
@@ -180,7 +180,7 @@ class MergeDiscussionHandler
             try {
                 $discussion->push();
             } catch (Throwable $e) {
-                $this->catchError($e, 'fixing_posts_number');
+                $this->catchError($e, 'fixing_posts_number: '.$e->getMessage());
             }
 
             try {
@@ -192,7 +192,7 @@ class MergeDiscussionHandler
                     ->setFirstPost($discussion->posts->first())
                     ->save();
             } catch (Throwable $e) {
-                $this->catchError($e, 'fixing_posts_number_meta');
+                $this->catchError($e, 'fixing_posts_number_meta: '.$e->getMessage());
             }
         });
     }
