@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions;
 use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Database\AbstractModel;
 use Flarum\Extend;
+use Flarum\Http\Middleware\HandleErrors;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Posts\DiscussionMergePost;
 

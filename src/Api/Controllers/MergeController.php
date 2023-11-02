@@ -13,7 +13,8 @@ namespace FoF\MergeDiscussions\Api\Controllers;
 
 use Flarum\Api\Controller\AbstractShowController;
 use Flarum\Api\Serializer\DiscussionSerializer;
-use FoF\MergeDiscussions\Api\Commands\MergeDiscussion;
+use Flarum\Http\RequestUtil;
+use FoF\MergeDiscussions\Commands\MergeDiscussion;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Bus\Dispatcher;
 use Illuminate\Support\Arr;
@@ -55,7 +56,7 @@ class MergeController extends AbstractShowController
      */
     protected function data(ServerRequestInterface $request, Document $document)
     {
-        $actor = $request->getAttribute('actor');
+        $actor = RequestUtil::getActor($request);
         $discussion = Arr::get($request->getQueryParams(), 'id');
         $ids = Arr::get($request->getParsedBody(), 'ids');
         $ordering = Arr::get($request->getParsedBody(), 'ordering');

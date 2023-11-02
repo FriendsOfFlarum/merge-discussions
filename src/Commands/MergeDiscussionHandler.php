@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace FoF\MergeDiscussions\Api\Commands;
+namespace FoF\MergeDiscussions\Commands;
 
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
