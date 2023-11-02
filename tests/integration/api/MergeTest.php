@@ -232,7 +232,7 @@ class MergeTest extends TestCase
         $this->assertEquals(9, $posts[8]->number);
 
         $this->assertEquals('Post 5 in Discussion 1', $posts[9]->content);
-        $this->assertEquals('comment', $posts[9]->type);    
+        $this->assertEquals('comment', $posts[9]->type);
         $this->assertEquals(10, $posts[9]->number);
 
         $this->assertEquals('discussionMerged', $posts[10]->type);
@@ -342,7 +342,7 @@ class MergeTest extends TestCase
     public function can_merge_multiple_discussions_by_date()
     {
         $response = $this->send(
-            $this->request('POST', "/api/discussions/1/merge", [
+            $this->request('POST', '/api/discussions/1/merge', [
                 'json' => [
                     'ids'      => [2, 3],
                     'ordering' => 'date',
@@ -405,7 +405,7 @@ class MergeTest extends TestCase
         $this->assertEquals(9, $posts[8]->number);
 
         $this->assertEquals('Post 4 in Discussion 1', $posts[9]->content);
-        $this->assertEquals('comment', $posts[9]->type);    
+        $this->assertEquals('comment', $posts[9]->type);
         $this->assertEquals(10, $posts[9]->number);
 
         $this->assertEquals('Post 4 in Discussion 2', $posts[10]->content);
@@ -434,18 +434,18 @@ class MergeTest extends TestCase
         // Test the merged discussion has a 301 redirect to the target discussion
 
         $response = $this->send(
-            $this->request('GET', "/d/2", [])
+            $this->request('GET', '/d/2', [])
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+        $this->assertEquals('/d/1', $response->getHeader('Location')[0]);
 
         $response = $this->send(
-            $this->request('GET', "/d/3", [])
+            $this->request('GET', '/d/3', [])
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals("/d/1", $response->getHeader('Location')[0]);
+        $this->assertEquals('/d/1', $response->getHeader('Location')[0]);
     }
 
     // TODO: Fix this test
@@ -513,7 +513,7 @@ class MergeTest extends TestCase
     //     $this->assertEquals("Post 3 in Discussion 2", $posts[7]->content);
     //     $this->assertEquals('comment', $posts[7]->type);
     //     $this->assertEquals(8, $posts[7]->number);
-        
+
     //     $this->assertEquals("Post 4 in Discussion 2", $posts[8]->content);
     //     $this->assertEquals('comment', $posts[8]->type);
     //     $this->assertEquals(9, $posts[8]->number);
