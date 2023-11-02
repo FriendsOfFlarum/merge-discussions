@@ -15,6 +15,7 @@ use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
+use Flarum\User\Exception\PermissionDeniedException;
 use Flarum\User\UserRepository;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Events\MergingDiscussions;
@@ -59,14 +60,19 @@ class MergeDiscussionHandler
         $this->validator = $validator;
     }
 
-    public function handle(MergeDiscussion $command)
+    /**
+     * @throws ValidationException
+     * @throws PermissionDeniedException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function handle(MergeDiscussion $command): Discussion
     {
         $discussion = $this->discussions->findOrFail($command->discussionId);
 
         $command->actor->assertCan('merge', $discussion);
 
         if ($command->merge && $command->ordering === 'date') {
-            $this->fixPostsNumber($discussion);
+            $this->fixPostsNumberForDateSort($discussion);
         }
 
         /** @var Collection $discussions */
@@ -147,7 +153,10 @@ class MergeDiscussionHandler
         return $discussion;
     }
 
-    private function catchError(Throwable $e, string $type)
+    /**
+     * @throws ValidationException
+     */
+    private function catchError(Throwable $e, string $type): void
     {
         $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
 
@@ -159,23 +168,28 @@ class MergeDiscussionHandler
         ]);
     }
 
-    private function fixPostsNumber(Discussion $discussion): void
+    /**
+     * @throws ValidationException
+     */
+    private function fixPostsNumberForDateSort(Discussion $discussion): void
     {
-        $posts = $discussion->posts;
-        if ($posts->count() === $discussion->posts()->max('number')) {
+        $postMaxNumber = $discussion->posts()->max('number');
+        if ($discussion->posts->count() === $postMaxNumber) {
             return;
         }
 
-        $number = 0;
+        $this->setRelationsAndMergeByDate($discussion, new SupportCollection([]), $postMaxNumber);
+        $this->saveDiscussionPosts($discussion);
 
-        $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
-            $number++;
-            $post->number = $number;
-            $discussion->posts[$i] = $post;
-        });
+        $this->setRelationsAndMergeByDate($discussion, new SupportCollection([]));
+        $this->saveDiscussionPosts($discussion);
+    }
 
-        $discussion->setRelation('posts', $discussion->posts->sortBy('number'));
-
+    /**
+     * @throws ValidationException
+     */
+    private function saveDiscussionPosts(Discussion $discussion): void
+    {
         resolve('db.connection')->transaction(function () use ($discussion) {
             try {
                 $discussion->push();
