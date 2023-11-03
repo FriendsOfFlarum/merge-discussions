@@ -163,14 +163,14 @@ class MergeDiscussionsHandler
      */
     protected function lockInvoledDiscussions(User $actor, Discussion $discussion, EloquentCollection $discussions): void
     {
-        if ($this->extensions->isEnabled('flarum-lock') && ! $discussion->is_locked) {
+        if ($this->extensions->isEnabled('flarum-lock') && !$discussion->is_locked) {
             /** @phpstan-ignore-next-line */
             $discussion->is_locked = true;
             $discussion->save();
 
             //$this->events->dispatch(new DiscussionWasLocked($discussion, $actor));
 
-            $discussions->each(function (Discussion $discussion) use ($actor) {
+            $discussions->each(function (Discussion $discussion) {
                 /** @phpstan-ignore-next-line */
                 $discussion->is_locked = true;
                 $discussion->save();
