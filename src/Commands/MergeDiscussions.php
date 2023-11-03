@@ -14,12 +14,7 @@ namespace FoF\MergeDiscussions\Commands;
 use Flarum\User\User;
 use Illuminate\Support\Arr;
 
-/**
- * Old code
- * @deprecated
-
- */
-class MergeDiscussion
+class MergeDiscussions
 {
     /**
      * The user performing the action.
@@ -63,7 +58,7 @@ class MergeDiscussion
      * @param       $ordering
      * @param bool  $merge
      */
-    public function __construct(User $actor, $discussionId, $ids, $ordering = 'date', $merge = true)
+    public function __construct(User $actor, $discussionId, $ids, $ordering, $merge = true)
     {
         $this->actor = $actor;
         $this->discussionId = (int) $discussionId;
