@@ -160,7 +160,7 @@ class MergeTest extends TestCase
      *
      * @dataProvider invalidDiscussionData
      */
-    public function cannot_merge_discussion_with_invalid_data(int $to, int $from, string $pointer)
+    public function cannot_merge_discussion_with_invalid_data(int $to, int $from, int $statusCode, string $pointer = null)
     {
         $response = $this->send(
             $this->request('POST', "/api/discussions/$to/merge", [
@@ -171,13 +171,16 @@ class MergeTest extends TestCase
             ])
         );
 
-        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertEquals($statusCode, $response->getStatusCode());
 
         $data = json_decode($response->getBody()->getContents(), true);
 
         $this->assertArrayHasKey('errors', $data);
         $this->assertCount(1, $data['errors']);
-        $this->assertEquals('/data/attributes/'.$pointer, $data['errors'][0]['source']['pointer']);
+
+        if ($pointer) {
+            $this->assertEquals('/data/attributes/'.$pointer, $data['errors'][0]['source']['pointer']);
+        }
     }
 
     public function discussionMergeData(): array
@@ -191,8 +194,8 @@ class MergeTest extends TestCase
     public function invalidDiscussionData(): array
     {
         return [
-            [1, 100, 'merging_discussions'],
-            [100, 1, 'discussion_id'],
+            [1, 100, 422, 'merging_discussions'],
+            [100, 1, 404],
         ];
     }
 

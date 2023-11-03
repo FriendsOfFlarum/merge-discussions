@@ -11,10 +11,15 @@
 
 namespace FoF\MergeDiscussions\Jobs;
 
+use Flarum\Discussion\Discussion;
+use Flarum\Extension\ExtensionManager;
+use Flarum\Lock\Event\DiscussionWasUnlocked;
+use Flarum\Notification\NotificationSyncer;
 use Flarum\Queue\AbstractJob;
 use Flarum\User\User;
 use FoF\MergeDiscussions\Commands\MergeDiscussions;
-use Illuminate\Bus\Dispatcher;
+use Illuminate\Contracts\Bus\Dispatcher;
+use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 
 class MergeDiscussionsJob extends AbstractJob
 {
@@ -37,8 +42,17 @@ class MergeDiscussionsJob extends AbstractJob
         $this->merge = $merge;
     }
 
-    public function handle(Dispatcher $bus)
+    public function handle(Dispatcher $bus, ExtensionManager $extensions, EventDispatcher $events, NotificationSyncer $notifications)
     {
-        $bus->dispatch(new MergeDiscussions($this->actor, $this->discussionId, $this->ids, $this->ordering, $this->merge));
+        /** @var Discussion $discussion */
+        $discussion = $bus->dispatch(new MergeDiscussions($this->actor, $this->discussionId, $this->ids, $this->ordering, $this->merge));
+
+        if ($extensions->isEnabled('flarum-lock') && $discussion->is_locked) {
+            $discussion->is_locked = false;
+            $discussion->save();
+
+            //$events->dispatch(new DiscussionWasUnlocked($discussion, $this->actor));
+        }
+        // TODO: send notification on merge completion
     }
 }
