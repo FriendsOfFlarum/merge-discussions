@@ -157,6 +157,7 @@ class MergeTest extends TestCase
 
     /**
      * @test
+     *
      * @dataProvider invalidDiscussionData
      */
     public function cannot_merge_discussion_with_invalid_data(int $to, int $from, string $pointer)
@@ -176,7 +177,7 @@ class MergeTest extends TestCase
 
         $this->assertArrayHasKey('errors', $data);
         $this->assertCount(1, $data['errors']);
-        $this->assertEquals('/data/attributes/' . $pointer, $data['errors'][0]['source']['pointer']);
+        $this->assertEquals('/data/attributes/'.$pointer, $data['errors'][0]['source']['pointer']);
     }
 
     public function discussionMergeData(): array
@@ -191,7 +192,7 @@ class MergeTest extends TestCase
     {
         return [
             [1, 100, 'merging_discussions'],
-            [100, 1, 'discussion_id']
+            [100, 1, 'discussion_id'],
         ];
     }
 

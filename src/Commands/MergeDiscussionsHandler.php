@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Commands;
 
 use Carbon\Carbon;
@@ -18,7 +27,6 @@ use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Collection;
 
 class MergeDiscussionsHandler
 {
@@ -51,7 +59,7 @@ class MergeDiscussionsHandler
      * @var ExtensionManager
      */
     protected $extensions;
-    
+
     public function __construct(
         ConnectionResolverInterface $db,
         UserRepository $users,
@@ -59,8 +67,7 @@ class MergeDiscussionsHandler
         Dispatcher $events,
         MergeDiscussionValidator $validator,
         ExtensionManager $extensions
-        )
-    {
+    ) {
         $this->db = $db;
         $this->users = $users;
         $this->discussions = $discussions;
@@ -68,13 +75,14 @@ class MergeDiscussionsHandler
         $this->validator = $validator;
         $this->extensions = $extensions;
     }
-    
+
     /**
      * Runs the process in a transaction.
      * Exceptions will always result in no changes.
      *
      * @throws \Flarum\User\Exception\PermissionDeniedException
      * @throws \Illuminate\Validation\ValidationException
+     *
      * @return Discussion
      */
     public function handle(MergeDiscussions $command): Discussion
@@ -87,6 +95,7 @@ class MergeDiscussionsHandler
             }
         } catch (\Exception $e) {
             $this->db->connection()->rollBack();
+
             throw $e;
         }
 
@@ -106,7 +115,7 @@ class MergeDiscussionsHandler
 
         $this->validator->assertValid([
             'discussion_id' => $discussion->id,
-            'posts' => $postIds,
+            'posts'         => $postIds,
         ]);
 
         /** @var EloquentCollection $discussions */
@@ -146,9 +155,10 @@ class MergeDiscussionsHandler
     /**
      * If `flarum/lock` is enabled, lock all involved discussions before merging.
      *
-     * @param User $actor
-     * @param Discussion $discussion
+     * @param User               $actor
+     * @param Discussion         $discussion
      * @param EloquentCollection $discussions
+     *
      * @return void
      */
     protected function lockInvoledDiscussions(User $actor, Discussion $discussion, EloquentCollection $discussions): void
@@ -173,8 +183,9 @@ class MergeDiscussionsHandler
     /**
      * If `flarum/lock` is enabled, unlock the target discussion after merging.
      *
-     * @param User $actor
+     * @param User       $actor
      * @param Discussion $discussion
+     *
      * @return void
      */
     protected function unlockTargetDiscussion(User $actor, Discussion $discussion): void
@@ -191,8 +202,9 @@ class MergeDiscussionsHandler
     /**
      * Creates redirects from merged discussions, and deletes the old Discussion entities.
      *
-     * @param Discussion $targetDiscussion
+     * @param Discussion         $targetDiscussion
      * @param EloquentCollection $discussions
+     *
      * @return void
      */
     protected function createRedirectsFromMergedDiscussions(Discussion $targetDiscussion, EloquentCollection $discussions): void
@@ -253,9 +265,9 @@ class MergeDiscussionsHandler
         $merged = $checkpointPosts->merge($posts)->sortBy('created_at')->values();
 
         $merged->map(function (Post $post, int $key) use ($merged, $checkpointPosts, $discussion) {
-            $prev = $merged[$key-1] ?? null;
+            $prev = $merged[$key - 1] ?? null;
 
-            if ($prev && ! $checkpointPosts->firstWhere('id', $post->id)) {
+            if ($prev && !$checkpointPosts->firstWhere('id', $post->id)) {
                 $post->number = $prev->number + 1;
                 $post->discussion_id = $discussion->id;
 
@@ -281,8 +293,9 @@ class MergeDiscussionsHandler
     /**
      * Pushes the merged posts to the end of the discussion.
      *
-     * @param Discussion $discussion
+     * @param Discussion               $discussion
      * @param EloquentCollection<Post> $posts
+     *
      * @return Discussion
      */
     protected function suffix(Discussion $discussion, EloquentCollection $posts): Discussion

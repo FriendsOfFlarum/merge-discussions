@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * This file is part of fof/merge-discussions.
+ *
+ * Copyright (c) FriendsOfFlarum.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace FoF\MergeDiscussions\Jobs;
 
 use Flarum\Queue\AbstractJob;
@@ -18,7 +27,7 @@ class MergeDiscussionsJob extends AbstractJob
     protected $ordering;
 
     protected $merge;
-    
+
     public function __construct(User $actor, int $discussionId, array $ids, string $ordering = 'date', bool $merge = true)
     {
         $this->actor = $actor;
@@ -27,7 +36,7 @@ class MergeDiscussionsJob extends AbstractJob
         $this->ordering = $ordering;
         $this->merge = $merge;
     }
-    
+
     public function handle(Dispatcher $bus)
     {
         $bus->dispatch(new MergeDiscussions($this->actor, $this->discussionId, $this->ids, $this->ordering, $this->merge));

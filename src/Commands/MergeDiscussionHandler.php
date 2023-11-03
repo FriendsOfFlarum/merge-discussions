@@ -26,7 +26,8 @@ use Illuminate\Support\Collection as SupportCollection;
 use Throwable;
 
 /**
- * Old code
+ * Old code.
+ *
  * @deprecated
  */
 class MergeDiscussionHandler

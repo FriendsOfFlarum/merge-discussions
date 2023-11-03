@@ -14,7 +14,6 @@ namespace FoF\MergeDiscussions\Api\Controllers;
 use Flarum\Api\Controller\AbstractShowController;
 use Flarum\Api\Serializer\DiscussionSerializer;
 use Flarum\Http\RequestUtil;
-use FoF\MergeDiscussions\Commands\MergeDiscussion;
 use FoF\MergeDiscussions\Commands\MergeDiscussions;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Bus\Dispatcher;

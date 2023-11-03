@@ -15,9 +15,9 @@ use Flarum\User\User;
 use Illuminate\Support\Arr;
 
 /**
- * Old code
+ * Old code.
+ *
  * @deprecated
-
  */
 class MergeDiscussion
 {
