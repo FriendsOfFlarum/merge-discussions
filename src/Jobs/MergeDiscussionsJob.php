@@ -47,6 +47,7 @@ class MergeDiscussionsJob extends AbstractJob
         /** @var Discussion $discussion */
         $discussion = $bus->dispatch(new MergeDiscussions($this->actor, $this->discussionId, $this->ids, $this->ordering, $this->merge));
 
+        /** @phpstan-ignore-next-line */
         if ($extensions->isEnabled('flarum-lock') && $discussion->is_locked) {
             $discussion->is_locked = false;
             $discussion->save();
