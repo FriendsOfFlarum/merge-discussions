@@ -13,7 +13,6 @@ namespace FoF\MergeDiscussions\Jobs;
 
 use Flarum\Discussion\Discussion;
 use Flarum\Extension\ExtensionManager;
-use Flarum\Lock\Event\DiscussionWasUnlocked;
 use Flarum\Notification\NotificationSyncer;
 use Flarum\Queue\AbstractJob;
 use Flarum\User\User;

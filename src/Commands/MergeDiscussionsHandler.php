@@ -17,7 +17,6 @@ use Flarum\Discussion\DiscussionRepository;
 use Flarum\Extension\ExtensionManager;
 use Flarum\Lock\Event\DiscussionWasLocked;
 use Flarum\Lock\Event\DiscussionWasUnlocked;
-use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
 use Flarum\User\User;
 use Flarum\User\UserRepository;
