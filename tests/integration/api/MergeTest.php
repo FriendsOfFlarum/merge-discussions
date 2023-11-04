@@ -232,6 +232,12 @@ class MergeTest extends TestCase
 
         $posts = $discussion->posts;
 
+        foreach ($posts as $post) {
+            if ($post !== $posts->last()) {
+                $this->assertEquals('comment', $post->type);
+            }
+        }
+
         $this->assertEquals(11, $posts->count());
 
         // Check the posts were ordered as expected by date/time
@@ -283,6 +289,12 @@ class MergeTest extends TestCase
 
         $posts = $discussion->posts()->get();
 
+        foreach ($posts as $post) {
+            if ($post !== $posts->last()) {
+                $this->assertEquals('comment', $post->type);
+            }
+        }
+
         $this->assertEquals(11, $posts->count());
 
         // check the posts were ordered as expected
@@ -292,6 +304,10 @@ class MergeTest extends TestCase
         $this->assertPostAttrs($posts[2], $to, 3, 3);
         $this->assertPostAttrs($posts[3], $to, 4, 4);
         $this->assertPostAttrs($posts[4], $to, 5, 5);
+
+        // $this->assertEquals('discussionLocked', $posts[5]->type);
+        // $this->assertEquals(6, $posts[5]->number);
+
         $this->assertPostAttrs($posts[5], $from, 1, 6);
         $this->assertPostAttrs($posts[6], $from, 2, 7);
         $this->assertPostAttrs($posts[7], $from, 3, 8);
@@ -355,6 +371,12 @@ class MergeTest extends TestCase
         $posts = $discussion->posts()->orderBy('created_at', 'asc')->get();
 
         $this->assertEquals(16, $posts->count());
+
+        foreach ($posts as $post) {
+            if ($post !== $posts->last()) {
+                $this->assertEquals('comment', $post->type);
+            }
+        }
 
         // Check the posts were ordered as expected by date/time
 

@@ -17,6 +17,7 @@ use Flarum\Discussion\DiscussionRepository;
 use Flarum\Extension\ExtensionManager;
 use Flarum\Lock\Event\DiscussionWasLocked;
 use Flarum\Lock\Event\DiscussionWasUnlocked;
+use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
 use Flarum\User\User;
 use Flarum\User\UserRepository;
@@ -134,8 +135,6 @@ class MergeDiscussionsHandler
 
         $this->events->dispatch(new MergingDiscussions($actor, $posts, $discussion, $discussions, $method));
 
-        $this->lockInvoledDiscussions($actor, $discussion, $discussions);
-
         $result = $this->useMethod($method, $discussion, $posts);
 
         $this->createRedirectsFromMergedDiscussions($discussion, $discussions);
@@ -152,31 +151,14 @@ class MergeDiscussionsHandler
         return $this->$method($discussion, $posts);
     }
 
-    /**
-     * If `flarum/lock` is enabled, lock all involved discussions before merging.
-     *
-     * @param User               $actor
-     * @param Discussion         $discussion
-     * @param EloquentCollection $discussions
-     *
-     * @return void
-     */
-    protected function lockInvoledDiscussions(User $actor, Discussion $discussion, EloquentCollection $discussions): void
+    protected function lockDiscussion(Discussion $discussion): void
     {
-        /** @phpstan-ignore-next-line */
-        if ($this->extensions->isEnabled('flarum-lock') && !$discussion->is_locked) {
+        if ($this->extensions->isEnabled('flarum-lock')) {
+            /** @phpstan-ignore-next-line */
             $discussion->is_locked = true;
             $discussion->save();
 
             //$this->events->dispatch(new DiscussionWasLocked($discussion, $actor));
-
-            $discussions->each(function (Discussion $discussion) {
-                /** @phpstan-ignore-next-line */
-                $discussion->is_locked = true;
-                $discussion->save();
-
-                //$this->events->dispatch(new DiscussionWasLocked($discussion, $actor));
-            });
         }
     }
 

@@ -26,7 +26,8 @@ use Illuminate\Support\Collection as SupportCollection;
 use Throwable;
 
 /**
- * Old code.
+ * Use the `MergeDiscussions` command instead. This class is kept for backwards compatibility.
+ * TODO: Remove in 2.0
  *
  * @deprecated
  */
