@@ -186,8 +186,8 @@ class MergeTest extends TestCase
     public function discussionMergeData(): array
     {
         return [
-            [1, 2],
-            [2, 1],
+            [1, 2], // Merging newer discussion into older
+            [2, 1], // Merging older discussion into newer
         ];
     }
 
