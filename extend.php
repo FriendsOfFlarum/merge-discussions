@@ -36,7 +36,8 @@ return [
 
     (new Extend\Event())
         ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class)
-        ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class),
+        ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class)
+        ->listen(DiscussionWasMerged::class, Listeners\DecrementUserDiscussionCountWhenMerged::class),
 
     (new Extend\ApiSerializer(DiscussionSerializer::class))
         ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
