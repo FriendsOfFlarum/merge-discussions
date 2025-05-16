@@ -211,17 +211,21 @@ export default class DiscussionMergeModal extends Modal {
 
         if (payload.included) payload.included.map(app.store.pushObject.bind(app.store));
 
-        payload.data.relationships.posts.data
-          .map((record) => app.store.getById('posts', record.id))
-          .sort((a, b) => a.createdAt() - b.createdAt())
-          .forEach((p, i) => {
-            p.number(number++);
+        let posts = payload.data.relationships.posts.data.map((record) => app.store.getById('posts', record.id));
 
-            payload.data.relationships.posts.data[i] = {
-              type: 'posts',
-              id: p.id(),
-            };
-          });
+        // apply date-sort only if ordering === 'date'
+        if (this.order() === 'date') {
+          posts.sort((a, b) => a.createdAt() - b.createdAt());
+        }
+
+        // then renumber & rebuild the relationship array
+        posts.forEach((p, i) => {
+          p.number(i + 1);
+          payload.data.relationships.posts.data[i] = {
+            type: 'posts',
+            id: p.id(),
+          };
+        });
 
         const discussion = app.store.createRecord(payload.data.type, payload.data);
         discussion.payload = payload;
