@@ -199,6 +199,7 @@ export default class DiscussionMergeModal extends Modal {
 
   changeOrdering(key) {
     this.order(key);
+    if (this.preview) delete this.preview;
   }
 
   loadPreview() {
