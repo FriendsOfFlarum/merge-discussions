@@ -26,26 +26,8 @@ class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    /**
-     * @var Discussion
-     */
-    protected $discussion;
-
-    /**
-     * @var User
-     */
-    protected $actor;
-
-    /**
-     * @var Collection
-     */
-    protected $mergedDiscussions;
-
-    public function __construct(Discussion $discussion, Collection $mergedDiscussions, User $actor)
+    public function __construct(protected Discussion $discussion, protected Collection $mergedDiscussions, protected User $actor)
     {
-        $this->discussion = $discussion;
-        $this->mergedDiscussions = $mergedDiscussions;
-        $this->actor = $actor;
     }
 
     public function handle(NotificationSyncer $notifications): void

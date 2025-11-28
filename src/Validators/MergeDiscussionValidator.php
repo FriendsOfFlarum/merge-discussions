@@ -15,7 +15,7 @@ use Flarum\Foundation\AbstractValidator;
 
 class MergeDiscussionValidator extends AbstractValidator
 {
-    protected $rules = [
+    protected array $rules = [
         'discussion_id' => [
             'int',
             'filled',

@@ -30,20 +30,8 @@ class MergeController extends AbstractShowController
      */
     public $serializer = DiscussionSerializer::class;
 
-    /**
-     * @var Dispatcher
-     */
-    protected $bus;
-
-    /**
-     * @var MergeDiscussionValidator
-     */
-    protected $validator;
-
-    public function __construct(Dispatcher $bus, MergeDiscussionValidator $validator)
+    public function __construct(protected Dispatcher $bus, protected MergeDiscussionValidator $validator)
     {
-        $this->bus = $bus;
-        $this->validator = $validator;
     }
 
     /**

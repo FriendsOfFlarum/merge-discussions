@@ -30,16 +30,6 @@ class MergePreviewController extends AbstractShowController
     public $serializer = DiscussionSerializer::class;
 
     /**
-     * @var Dispatcher
-     */
-    protected $bus;
-
-    /**
-     * @var MergeDiscussionValidator
-     */
-    protected $validator;
-
-    /**
      * {@inheritdoc}
      */
     public $include = [
@@ -51,13 +41,8 @@ class MergePreviewController extends AbstractShowController
         'posts.hiddenUser',
     ];
 
-    /**
-     * @param Dispatcher $bus
-     */
-    public function __construct(Dispatcher $bus, MergeDiscussionValidator $validator)
+    public function __construct(protected Dispatcher $bus, protected MergeDiscussionValidator $validator)
     {
-        $this->bus = $bus;
-        $this->validator = $validator;
     }
 
     /**

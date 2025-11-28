@@ -51,7 +51,7 @@ return [
         ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
 
     (new Extend\Notification())
-        ->type(Notification\DiscussionMergedBlueprint::class, DiscussionSerializer::class, ['alert', 'email']),
+        ->type(Notification\DiscussionMergedBlueprint::class, ['alert', 'email']),
 
     (new Extend\Middleware('forum'))
         ->insertBefore(HandleErrors::class, Middleware\Redirection::class),

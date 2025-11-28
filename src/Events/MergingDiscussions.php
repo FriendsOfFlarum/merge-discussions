@@ -18,31 +18,7 @@ use Illuminate\Support\Collection;
 
 class MergingDiscussions
 {
-    /**
-     * @var User
-     */
-    public $actor;
-
-    /**
-     * @var Post[]|Collection
-     */
-    public $posts;
-
-    /**
-     * @var Discussion
-     */
-    public $discussion;
-
-    /**
-     * @var Discussion[]|Collection Discussion
-     */
-    public $mergedDiscussions;
-
-    public function __construct(User $actor, Collection $posts, Discussion $discussion, Collection $mergedDiscussions)
+    public function __construct(public User $actor, public Collection $posts, public Discussion $discussion, public Collection $mergedDiscussions)
     {
-        $this->actor = $actor;
-        $this->posts = $posts;
-        $this->discussion = $discussion;
-        $this->mergedDiscussions = $mergedDiscussions;
     }
 }

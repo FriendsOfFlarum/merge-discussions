@@ -17,13 +17,6 @@ use Illuminate\Support\Arr;
 class MergeDiscussion
 {
     /**
-     * The user performing the action.
-     *
-     * @var User
-     */
-    public $actor;
-
-    /**
      * Discussion id to merge other discussions into.
      *
      * @var int
@@ -38,32 +31,13 @@ class MergeDiscussion
     public $ids;
 
     /**
-     * The merge ordering.
-     *
-     * @var string
-     */
-    public $ordering;
-
-    /**
-     * @var bool Save merged discussion to database
-     */
-    public $merge;
-
-    /**
      * MergeDiscussion constructor.
      *
-     * @param User  $actor
-     * @param       $discussionId
      * @param int[] $ids
-     * @param       $ordering
-     * @param bool  $merge
      */
-    public function __construct(User $actor, $discussionId, $ids, $ordering = 'date', $merge = true)
+    public function __construct(public User $actor, $discussionId, $ids, public $ordering = 'date', public $merge = true)
     {
-        $this->actor = $actor;
         $this->discussionId = (int) $discussionId;
         $this->ids = Arr::wrap($ids);
-        $this->ordering = $ordering;
-        $this->merge = $merge;
     }
 }

@@ -27,36 +27,8 @@ use Throwable;
 
 class MergeDiscussionHandler
 {
-    /**
-     * @var UserRepository
-     */
-    protected $users;
-
-    /**
-     * @var DiscussionRepository
-     */
-    protected $discussions;
-
-    /**
-     * @var Dispatcher
-     */
-    protected $events;
-
-    /**
-     * @var MergeDiscussionValidator
-     */
-    protected $validator;
-
-    public function __construct(
-        UserRepository $users,
-        DiscussionRepository $discussions,
-        Dispatcher $events,
-        MergeDiscussionValidator $validator
-    ) {
-        $this->users = $users;
-        $this->discussions = $discussions;
-        $this->events = $events;
-        $this->validator = $validator;
+    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator)
+    {
     }
 
     public function handle(MergeDiscussion $command)
