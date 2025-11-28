@@ -15,6 +15,10 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use Flarum\User\User;
+use Flarum\Post\Post;
 
 class MergeTest extends TestCase
 {
@@ -27,17 +31,17 @@ class MergeTest extends TestCase
         $this->extension('fof-merge-discussions');
 
         $this->prepareDatabase([
-            'users' => [
+            User::class => [
                 $this->normalUser(),
                 ['id' => 3, 'username' => 'moderator', 'email' => 'moderator@machine.local', 'password' => '$2y$10$LO59tiT7uggl6Oe23o/O6.utnF6ipngYjvMvaxo1TciKqBttDNKim', 'is_email_confirmed' => true],
             ],
-            'discussions' => [
+            Discussion::class => [
                 ['id' => 1, 'title' => 'Discussion 1', 'comment_count' => 5, 'user_id' => 1, 'created_at' => Carbon::now()->subDays(5), 'first_post_id' => 1],
                 ['id' => 2, 'title' => 'Discussion 2', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(4), 'first_post_id' => 2],
                 ['id' => 3, 'title' => 'Discussion 3', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(3), 'first_post_id' => 3],
                 ['id' => 4, 'title' => 'Discussion 4', 'comment_count' => 5, 'user_id' => 3, 'created_at' => Carbon::now()->subDays(2), 'first_post_id' => 4],
             ],
-            'posts' => [
+            Post::class => [
                 // Existing first posts for each discussion, spaced 4 hours apart
                 ['id' => 1, 'user_id' => 1, 'type' => 'comment', 'content' => 'Post 1 in Discussion 1', 'discussion_id' => 1, 'number' => 1, 'created_at' => Carbon::now()->subDays(5)->subHours(4)],
                 ['id' => 2, 'user_id' => 2, 'type' => 'comment', 'content' => 'Post 1 in Discussion 2', 'discussion_id' => 2, 'number' => 1, 'created_at' => Carbon::now()->subDays(4)->subHours(4)],
@@ -73,9 +77,7 @@ class MergeTest extends TestCase
         ]);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function cannot_merge_discussions_without_data()
     {
         $response = $this->send(
@@ -94,9 +96,7 @@ class MergeTest extends TestCase
         $this->assertEquals('/data/attributes/merging_discussions', $data['errors'][0]['source']['pointer']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function cannot_preview_discussion_merge_without_data()
     {
         $response = $this->send(
@@ -114,9 +114,7 @@ class MergeTest extends TestCase
         $this->assertEquals('/data/attributes/merging_discussions', $data['errors'][0]['source']['pointer']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function unauthorized_user_cannot_merge_discussions()
     {
         $response = $this->send(
@@ -153,7 +151,7 @@ class MergeTest extends TestCase
     //     $this->assertEquals(403, $response->getStatusCode());
     // }
 
-    public function discussionMergeData(): array
+    public static function discussionMergeData(): array
     {
         return [
             [1, 2],
@@ -161,11 +159,8 @@ class MergeTest extends TestCase
         ];
     }
 
-    /**
-     * @test
-     *
-     * @dataProvider discussionMergeData
-     */
+    #[Test]
+    #[DataProvider('discussionMergeData')]
     public function can_merge_discussions_by_date(int $to, int $from)
     {
         $response = $this->send(
@@ -248,11 +243,8 @@ class MergeTest extends TestCase
         $this->assertEquals("/d/$to", $response->getHeader('Location')[0]);
     }
 
-    /**
-     * @test
-     *
-     * @dataProvider discussionMergeData
-     */
+    #[Test]
+    #[DataProvider('discussionMergeData')]
     public function can_merge_discussions_by_suffix(int $to, int $from)
     {
         $response = $this->send(
@@ -336,9 +328,7 @@ class MergeTest extends TestCase
         $this->assertEquals("/d/$to", $response->getHeader('Location')[0]);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function can_merge_multiple_discussions_by_date()
     {
         $response = $this->send(
