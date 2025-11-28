@@ -3,7 +3,6 @@ import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import Button from 'flarum/common/components/Button';
 import Modal from 'flarum/common/components/Modal';
-import PostStream from 'flarum/forum/components/PostStream';
 import PostStreamState from 'flarum/forum/states/PostStreamState';
 import GlobalSearchState from 'flarum/forum/states/GlobalSearchState';
 import Stream from 'flarum/common/utils/Stream';
