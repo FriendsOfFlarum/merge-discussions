@@ -1,7 +1,7 @@
 import app from 'flarum/admin/app';
 
 app.initializers.add('fof/merge-discussions', () => {
-  app.extensionData
+  app.registry
     .for('fof-merge-discussions')
     .registerPermission(
       {

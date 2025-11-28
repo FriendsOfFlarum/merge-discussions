@@ -1,8 +1,9 @@
+import Form from 'flarum/common/components/Form';
 import app from 'flarum/forum/app';
 import DiscussionPage from 'flarum/forum/components/DiscussionPage';
 import IndexPage from 'flarum/forum/components/IndexPage';
 import Button from 'flarum/common/components/Button';
-import Modal from 'flarum/common/components/Modal';
+import FormModal from 'flarum/common/components/FormModal';
 import PostStreamState from 'flarum/forum/states/PostStreamState';
 import GlobalSearchState from 'flarum/forum/states/GlobalSearchState';
 import Stream from 'flarum/common/utils/Stream';
@@ -10,10 +11,10 @@ import classList from 'flarum/common/utils/classList';
 
 import DiscussionSearch from './DiscussionSearch';
 import ItemList from 'flarum/common/utils/ItemList';
-import icon from 'flarum/common/helpers/icon';
+import Icon from 'flarum/common/components/Icon';
 import Tooltip from 'flarum/common/components/Tooltip';
 
-export default class DiscussionMergeModal extends Modal {
+export default class DiscussionMergeModal extends FormModal {
   oninit(vnode) {
     super.oninit(vnode);
 
@@ -94,7 +95,9 @@ export default class DiscussionMergeModal extends Modal {
           &nbsp;
           <label htmlFor={`ordering_${key}`}>{app.translator.trans(`fof-merge-discussions.forum.modal.ordering_${key}_label`)}</label>
           &nbsp;
-          <Tooltip text={app.translator.trans(`fof-merge-discussions.forum.modal.ordering_${key}_help`)}>{icon('fas fa-info-circle')}</Tooltip>
+          <Tooltip text={app.translator.trans(`fof-merge-discussions.forum.modal.ordering_${key}_help`)}>
+            <Icon name="fas fa-info-circle" />
+          </Tooltip>
         </div>,
         priority
       );
@@ -108,29 +111,24 @@ export default class DiscussionMergeModal extends Modal {
   content() {
     return (
       <div className="Modal-body">
-        <div className="Form">
+        <Form>
           <div className="Forum-group">{this.orderItems().toArray()}</div>
-
           <div className="Form-group">{this.typeItems().toArray()}</div>
-
           <p className="help">
             {app.translator.trans(`fof-merge-discussions.forum.modal.type_${this.type()}_help_text`, {
               title: this.discussion.title(),
             })}
           </p>
-
           <div className={classList('FormGroup', this.disabled() && 'hidden')}>
             <DiscussionSearch state={this.search} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
           </div>
-
           <div className="Form-group MergeDiscussions-Discussions">
             <ul>
               {this.merging.map((d) => (
                 <li>
                   <i className="fas fa-trash DeleteEntry-Button" onclick={() => this.remove(d)} />
-                  &nbsp;
                   <a href={`${app.forum.attribute('baseUrl')}/d/${d.id()}`} target="_blank">
-                    <i>{d.id()}</i> ~ {d.title()}
+                    <i>{d.id()}</i>~ {d.title()}
                   </a>
                 </li>
               ))}
@@ -145,7 +143,6 @@ export default class DiscussionMergeModal extends Modal {
             >
               {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
             </Button>
-
             {this.preview && (
               <div className="MergeDiscussions-PostStream">
                 <div className="Hero">
@@ -166,7 +163,7 @@ export default class DiscussionMergeModal extends Modal {
               {app.translator.trans('fof-merge-discussions.forum.modal.submit_button')}
             </Button>
           </div>
-        </div>
+        </Form>
       </div>
     );
   }
