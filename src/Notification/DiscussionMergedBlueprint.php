@@ -79,7 +79,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      */
     public function getEmailViews(): array
     {
-        return ['text' => 'fof-merge-discussions::emails.discussionMerged'];
+        return ['text' => 'fof-merge-discussions::email.plain.discussionMerged', 'html' => 'fof-merge-discussions::email.html.discussionMerged'];
     }
 
     /**
