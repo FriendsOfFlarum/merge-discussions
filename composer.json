@@ -48,8 +48,8 @@
                 "color": "#fff"
             }
         },
-        "flagrow": {
-            "discuss": "https://discuss.flarum.org/d/19460"
+        "branch-alias": {
+            "2.x": "2.x-dev"
         },
         "flarum-cli": {
             "modules": {
@@ -60,7 +60,8 @@
     },
     "require-dev": {
         "flarum/phpstan": "^2.0.0-beta",
-        "flarum/testing": "^2.0.0-beta"
+        "flarum/testing": "^2.0.0-beta",
+        "flarum/flags": "^2.0.0-beta"
     },
     "scripts": {
         "analyse:phpstan": "phpstan analyse",

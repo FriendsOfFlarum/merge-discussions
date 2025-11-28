@@ -30,7 +30,7 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
      *
      * @param Post|null $previous
      *
-     * @return Post The model resulting after the merge. If the merge is
+     * @return static The model resulting after the merge. If the merge is
      *              unsuccessful, this should be the current model instance. Otherwise,
      *              it should be the model that was merged into.
      */

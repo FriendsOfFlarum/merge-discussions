@@ -11,16 +11,12 @@
 
 namespace FoF\MergeDiscussions;
 
-use Flarum\Api\Serializer\DiscussionSerializer;
-use Flarum\Database\AbstractModel;
+use Flarum\Api\Resource\DiscussionResource;
+use Flarum\Api\Schema;
 use Flarum\Extend;
 use Flarum\Http\Middleware\HandleErrors;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Posts\DiscussionMergePost;
-use Flarum\Api\Context;
-use Flarum\Api\Endpoint;
-use Flarum\Api\Resource;
-use Flarum\Api\Schema;
 
 return [
     (new Extend\Frontend('forum'))
@@ -31,9 +27,8 @@ return [
         ->js(__DIR__.'/js/dist/admin.js'),
     new Extend\Locales(__DIR__.'/resources/locale'),
 
-    (new Extend\Routes('api'))
-        ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
-        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+    (new Extend\ApiResource(DiscussionResource::class))
+        ->endpoints(Api\Resource\MergeDiscussionEndpoints::class),
 
     (new Extend\Post())
         ->type(DiscussionMergePost::class),
@@ -42,11 +37,11 @@ return [
         ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class)
         ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class),
 
-    // @TODO: Replace with the new implementation https://docs.flarum.org/2.x/extend/api#extending-api-resources
-    (new Extend\ApiSerializer(DiscussionSerializer::class))
-        ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
-            return $serializer->getActor()->can('merge', $discussion);
-        }),
+    (new Extend\ApiResource(DiscussionResource::class))
+        ->fields(fn () => [
+            Schema\Boolean::make('canMerge')
+                ->get(fn ($discussion, $context) => $context->getActor()->can('merge', $discussion)),
+        ]),
 
     (new Extend\Settings())
         ->default('fof-merge-discussions.search_limit', 4)

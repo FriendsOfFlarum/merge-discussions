@@ -16,7 +16,7 @@ use FoF\MergeDiscussions\Posts\DiscussionMergePost;
 
 class CreatePostWhenMerged
 {
-    public function handle(DiscussionWasMerged $event)
+    public function handle(DiscussionWasMerged $event): void
     {
         $post = DiscussionMergePost::reply(
             $event->discussion->id,

@@ -13,10 +13,16 @@ namespace FoF\MergeDiscussions\Listeners;
 
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Jobs;
+use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Support\Collection;
 
 class NotifyParticipantsWhenMerged
 {
+    public function __construct(
+        protected Queue $queue
+    ) {
+    }
+    
     public function handle(DiscussionWasMerged $event): void
     {
         $mergedDiscussions = new Collection();
@@ -29,7 +35,7 @@ class NotifyParticipantsWhenMerged
             ]);
         }
 
-        resolve('flarum.queue.connection')->push(
+        $this->queue->push(
             new Jobs\SendNotificationWhenDiscussionIsMerged($event->discussion, $mergedDiscussions, $event->actor)
         );
     }

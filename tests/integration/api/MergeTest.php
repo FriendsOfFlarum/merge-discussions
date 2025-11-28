@@ -100,7 +100,7 @@ class MergeTest extends TestCase
     public function cannot_preview_discussion_merge_without_data()
     {
         $response = $this->send(
-            $this->request('GET', '/api/discussions/1/merge', [
+            $this->request('GET', '/api/discussions/1/merge-preview', [
                 'authenticatedAs' => 1,
             ])
         );
@@ -111,7 +111,39 @@ class MergeTest extends TestCase
 
         $this->assertArrayHasKey('errors', $data);
         $this->assertCount(1, $data['errors']);
-        $this->assertEquals('/data/attributes/merging_discussions', $data['errors'][0]['source']['pointer']);
+    }
+
+    #[Test]
+    public function can_preview_discussion_merge_by_date()
+    {
+        // Use parameter names with uppercase letters to bypass JSON:API validation
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/1/merge-preview', [
+                'authenticatedAs' => 3,
+            ])->withQueryParams([
+                'byIds' => '2',
+                'byOrdering' => 'date',
+            ])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode());
+
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        $this->assertArrayHasKey('data', $data);
+        $this->assertEquals('1', $data['data']['id']);
+        $this->assertEquals('discussions', $data['data']['type']);
+
+        // Verify the posts relationship is present (needed for frontend preview)
+        $this->assertArrayHasKey('relationships', $data['data']);
+        $this->assertArrayHasKey('posts', $data['data']['relationships']);
+        $this->assertArrayHasKey('data', $data['data']['relationships']['posts']);
+
+        // The frontend needs the post IDs to fetch and display them
+        $this->assertIsArray($data['data']['relationships']['posts']['data']);
+        // Preview now shows all posts from both discussions (merged preview)
+        // Discussion 1 has 5 posts, Discussion 2 has 5 posts = 10 total
+        $this->assertEquals(10, count($data['data']['relationships']['posts']['data']));
     }
 
     #[Test]

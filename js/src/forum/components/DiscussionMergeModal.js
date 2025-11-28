@@ -34,6 +34,13 @@ export default class DiscussionMergeModal extends FormModal {
     this.loadingPreview = false;
 
     this.search = new GlobalSearchState();
+
+    // Lazy load PostStream component
+    this.PostStream = null;
+    import('flarum/forum/components/PostStream').then((module) => {
+      this.PostStream = module.default;
+      m.redraw();
+    });
   }
 
   onready() {
@@ -143,12 +150,12 @@ export default class DiscussionMergeModal extends FormModal {
             >
               {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
             </Button>
-            {this.preview && (
+            {this.preview && this.PostStream && (
               <div className="MergeDiscussions-PostStream">
                 <div className="Hero">
                   <h2>{this.type() === 'target' ? this.discussion.title() : this.merging[0].title()}</h2>
                 </div>
-                <PostStream stream={this.preview} discussion={this.preview.discussion} onPositionChange={() => {}} />
+                <this.PostStream stream={this.preview} discussion={this.preview.discussion} onPositionChange={() => {}} />
               </div>
             )}
           </div>
@@ -232,6 +239,10 @@ export default class DiscussionMergeModal extends FormModal {
 
         this.preview = new PostStreamState(discussion, includedPosts);
 
+        // Set the visible range to show all posts (disable pagination in preview)
+        this.preview.visibleStart = 0;
+        this.preview.visibleEnd = posts.length;
+
         m.redraw();
       })
       .catch(() => (this.loadingPreview = false));
@@ -267,7 +278,11 @@ export default class DiscussionMergeModal extends FormModal {
 
         app.modal.close();
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error('Merge error:', error);
+        this.loading = false;
+        m.redraw();
+      })
       .then(this.loaded.bind(this));
   }
 
@@ -277,18 +292,29 @@ export default class DiscussionMergeModal extends FormModal {
     const merging = isTarget ? this.merging.map((d) => d.id()) : this.discussion.id();
     const ordering = this.order();
 
-    return {
+    // Convert array to comma-separated string for GET requests
+    const byIdsParam = method === 'GET' ? (Array.isArray(merging) ? merging.join(',') : String(merging)) : undefined;
+
+    const requestData = {
       method,
-      url: `${app.forum.attribute('apiUrl')}${endpoint}/merge`,
-      params: {
-        ids: merging,
-        ordering,
-      },
-      body: {
-        ids: merging,
-        ordering,
-      },
+      url: `${app.forum.attribute('apiUrl')}${endpoint}/merge${method === 'GET' ? '-preview' : ''}`,
       errorHandler: this.onerror.bind(this),
     };
+
+    if (method === 'GET') {
+      // For GET requests, use query parameters
+      requestData.params = {
+        byIds: byIdsParam,
+        byOrdering: ordering,
+      };
+    } else {
+      // For POST requests, use body
+      requestData.body = {
+        ids: merging,
+        ordering,
+      };
+    }
+
+    return requestData;
   }
 }
