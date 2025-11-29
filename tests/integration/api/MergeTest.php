@@ -198,7 +198,7 @@ class MergeTest extends TestCase
         $this->assertEquals(10, $discussion->comment_count);
         $this->assertEquals(2, $discussion->participant_count);
 
-        $posts = $discussion->posts()->orderBy('created_at', 'asc')->get()->values();
+        $posts = $discussion->posts()->orderBy('created_at', 'asc')->orderBy('id', 'asc')->get()->values();
 
         $this->assertEquals(11, $posts->count());
 
@@ -383,7 +383,7 @@ class MergeTest extends TestCase
         $this->assertEquals(15, $discussion->comment_count);
         $this->assertEquals(2, $discussion->participant_count);
 
-        $posts = $discussion->posts()->orderBy('created_at', 'asc')->get()->values();
+        $posts = $discussion->posts()->orderBy('created_at', 'asc')->orderBy('id', 'asc')->get()->values();
 
         $this->assertEquals(16, $posts->count());
 
