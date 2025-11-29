@@ -195,6 +195,9 @@ class MergeTest extends TestCase
     #[DataProvider('discussionMergeData')]
     public function can_merge_discussions_by_date(int $to, int $from)
     {
+        // Expected title based on which discussion is being merged
+        $fromTitle = $from === 1 ? 'Discussion 1' : 'Discussion 2';
+
         $response = $this->send(
             $this->request('POST', "/api/discussions/$to/merge", [
                 'json' => [
@@ -264,6 +267,23 @@ class MergeTest extends TestCase
 
         $this->assertEquals('discussionMerged', $posts[10]->type);
         $this->assertEquals(11, $posts[10]->number);
+
+        // Verify the merge post content
+        $mergePost = $posts[10];
+        $this->assertInstanceOf(\FoF\MergeDiscussions\Posts\DiscussionMergePost::class, $mergePost);
+        $this->assertIsArray($mergePost->content);
+        $this->assertArrayHasKey('count', $mergePost->content);
+        $this->assertArrayHasKey('titles', $mergePost->content);
+
+        // Should have merged 5 posts from the other discussion
+        $this->assertEquals(5, $mergePost->content['count']);
+
+        // Should have the title of the merged discussion
+        $this->assertIsArray($mergePost->content['titles']);
+        $this->assertCount(1, $mergePost->content['titles']);
+
+        // Verify the title matches the discussion that was merged
+        $this->assertEquals($fromTitle, $mergePost->content['titles'][0]);
 
         // Test the merged discussion has a 301 redirect to the target discussion
 

@@ -1,3 +1,4 @@
+import app from 'flarum/forum/app';
 import Search from 'flarum/forum/components/Search';
 import ItemList from 'flarum/common/utils/ItemList';
 import DiscussionSearchSource from './DiscussionSearchSource';

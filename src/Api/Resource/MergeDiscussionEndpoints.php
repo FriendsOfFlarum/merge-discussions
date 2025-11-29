@@ -80,68 +80,45 @@ class MergeDiscussionEndpoints
                     return $discussion;
                 })
                 ->response(function (Context $context, Discussion $discussion): ResponseInterface {
+                    // Use Flarum's serializer to properly serialize the discussion
+                    $serializer = new \Flarum\Api\Serializer($context);
+
                     // Get the merged posts from the relationship set by the handler
-                    $posts = $discussion->getRelation('posts');
+                    $mergedPosts = $discussion->getRelation('posts');
 
-                    // Build JSON:API response manually
-                    // Start with discussion data
-                    $discussionData = [
-                        'type' => 'discussions',
-                        'id' => (string) $discussion->id,
-                        'attributes' => [
-                            'title' => $discussion->title,
-                            'slug' => $discussion->slug,
-                            'commentCount' => count($posts),
-                            'participantCount' => $discussion->participant_count,
-                            'createdAt' => $discussion->created_at?->toIso8601String(),
-                            'lastPostedAt' => $discussion->last_posted_at?->toIso8601String(),
-                            'lastPostNumber' => $discussion->last_post_number,
-                        ],
-                        'relationships' => [
-                            'posts' => [
-                                'data' => []
-                            ]
-                        ]
-                    ];
+                    // Serialize the discussion with posts included
+                    $resource = $context->resource(
+                        $context->collection->resource($discussion, $context)
+                    );
 
-                    // Build included posts array
-                    $included = [];
-                    foreach ($posts as $post) {
-                        // Add post reference to discussion's posts relationship
-                        $discussionData['relationships']['posts']['data'][] = [
+                    $serializer->addPrimary($resource, $discussion, []);
+
+                    [$primary, $included] = $serializer->serialize();
+
+                    // Manually serialize each merged post using a separate serializer
+                    $postResource = $context->api->getResource('posts');
+                    $postSerializer = new \Flarum\Api\Serializer($context);
+
+                    foreach ($mergedPosts as $post) {
+                        $postSerializer->addPrimary($postResource, $post, []);
+                    }
+
+                    [$postPrimary, $postIncluded] = $postSerializer->serialize();
+
+                    // Update the discussion's posts relationship data to include our merged posts
+                    $primary[0]['relationships']['posts'] = ['data' => []];
+                    foreach ($mergedPosts as $post) {
+                        $primary[0]['relationships']['posts']['data'][] = [
                             'type' => 'posts',
                             'id' => (string) $post->id
                         ];
-
-                        // Add full post object to included
-                        $included[] = [
-                            'type' => 'posts',
-                            'id' => (string) $post->id,
-                            'attributes' => [
-                                'number' => $post->number,
-                                'createdAt' => $post->created_at?->toIso8601String(),
-                                'contentType' => $post->type,
-                                'contentHtml' => $post->content,
-                            ],
-                            'relationships' => [
-                                'user' => [
-                                    'data' => [
-                                        'type' => 'users',
-                                        'id' => (string) $post->user_id
-                                    ]
-                                ],
-                                'discussion' => [
-                                    'data' => [
-                                        'type' => 'discussions',
-                                        'id' => (string) $discussion->id
-                                    ]
-                                ]
-                            ]
-                        ];
                     }
 
+                    // Merge the post data into included
+                    $included = array_merge($included, $postPrimary, $postIncluded);
+
                     return new JsonResponse([
-                        'data' => $discussionData,
+                        'data' => $primary[0],
                         'included' => $included,
                     ]);
                 }),
