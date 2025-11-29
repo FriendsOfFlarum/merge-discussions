@@ -22,7 +22,7 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
     /**
      * {@inheritdoc}
      */
-    public static $type = 'discussionMerged';
+    public static string $type = 'discussionMerged';
 
     /**
      * Save the model, given that it is going to appear immediately after the
@@ -30,11 +30,11 @@ class DiscussionMergePost extends AbstractEventPost implements MergeableInterfac
      *
      * @param Post|null $previous
      *
-     * @return Post The model resulting after the merge. If the merge is
-     *              unsuccessful, this should be the current model instance. Otherwise,
-     *              it should be the model that was merged into.
+     * @return static The model resulting after the merge. If the merge is
+     *                unsuccessful, this should be the current model instance. Otherwise,
+     *                it should be the model that was merged into.
      */
-    public function saveAfter(?Post $previous = null)
+    public function saveAfter(?Post $previous = null): static
     {
         $this->save();
 

@@ -15,7 +15,7 @@ use Flarum\Foundation\AbstractValidator;
 
 class MergeDiscussionValidator extends AbstractValidator
 {
-    protected $rules = [
+    protected array $rules = [
         'discussion_id' => [
             'int',
             'filled',
@@ -29,5 +29,11 @@ class MergeDiscussionValidator extends AbstractValidator
             'array',
             'filled',
         ],
+    ];
+
+    protected array $messages = [
+        'posts.filled'               => 'The selected discussion(s) have no posts to merge. Discussions must have at least one post to be merged.',
+        'merging_discussions.filled' => 'You must select at least one discussion to merge.',
+        'merging_discussions.exists' => 'One or more of the selected discussions do not exist.',
     ];
 }

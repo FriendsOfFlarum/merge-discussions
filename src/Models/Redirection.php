@@ -45,7 +45,7 @@ class Redirection extends AbstractModel
         return $redirection;
     }
 
-    public static function request($id): ?self
+    public static function request(int|string $id): ?self
     {
         return self::query()
             ->where('request_discussion_id', $id)

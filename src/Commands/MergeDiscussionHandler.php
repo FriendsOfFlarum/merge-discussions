@@ -27,39 +27,11 @@ use Throwable;
 
 class MergeDiscussionHandler
 {
-    /**
-     * @var UserRepository
-     */
-    protected $users;
-
-    /**
-     * @var DiscussionRepository
-     */
-    protected $discussions;
-
-    /**
-     * @var Dispatcher
-     */
-    protected $events;
-
-    /**
-     * @var MergeDiscussionValidator
-     */
-    protected $validator;
-
-    public function __construct(
-        UserRepository $users,
-        DiscussionRepository $discussions,
-        Dispatcher $events,
-        MergeDiscussionValidator $validator
-    ) {
-        $this->users = $users;
-        $this->discussions = $discussions;
-        $this->events = $events;
-        $this->validator = $validator;
+    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator)
+    {
     }
 
-    public function handle(MergeDiscussion $command)
+    public function handle(MergeDiscussion $command): Discussion
     {
         $discussion = $this->discussions->findOrFail($command->discussionId);
 
@@ -71,11 +43,15 @@ class MergeDiscussionHandler
 
         /** @var Collection $discussions */
         $discussions = Discussion::query()
-            ->with('posts')
             ->findMany($command->ids);
 
+        // Load all posts for these discussions, bypassing visibility scopes
+        // We need all posts (including hidden ones) for the merge
         /** @var Collection $posts */
-        $posts = $discussions->pluck('posts')->flatten(1)
+        $posts = Post::query()
+            ->whereIn('discussion_id', $discussions->pluck('id'))
+            ->withoutGlobalScopes()
+            ->get()
             ->reject(function (Post $post) {
                 return $post->type === 'discussionTagged';
             });
@@ -117,12 +93,15 @@ class MergeDiscussionHandler
                 );
 
                 try {
+                    /** @var Post $firstPost */
+                    $firstPost = $discussion->posts->first();
+
                     $discussion
                         ->refresh()
                         ->refreshCommentCount()
                         ->refreshParticipantCount()
                         ->refreshLastPost()
-                        ->setFirstPost($discussion->posts->first())
+                        ->setFirstPost($firstPost)
                         ->save();
                 } catch (Throwable $e) {
                     $this->catchError($e, 'updating: '.$e->getMessage());
@@ -130,6 +109,7 @@ class MergeDiscussionHandler
 
                 try {
                     foreach ($discussions as $d) {
+                        /** @var Discussion $d */
                         Redirection::build($d, $discussion);
 
                         $d->delete();
@@ -147,7 +127,7 @@ class MergeDiscussionHandler
         return $discussion;
     }
 
-    private function catchError(Throwable $e, string $type)
+    private function catchError(Throwable $e, string $type): never
     {
         $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
 
@@ -169,8 +149,10 @@ class MergeDiscussionHandler
         $number = 0;
 
         $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
+            /** @var Post $post */
             $number++;
             $post->number = $number;
+            /** @phpstan-ignore-next-line */
             $discussion->posts[$i] = $post;
         });
 
@@ -184,12 +166,15 @@ class MergeDiscussionHandler
             }
 
             try {
+                /** @var Post $firstPost */
+                $firstPost = $discussion->posts->first();
+
                 $discussion
                     ->refresh()
                     ->refreshCommentCount()
                     ->refreshParticipantCount()
                     ->refreshLastPost()
-                    ->setFirstPost($discussion->posts->first())
+                    ->setFirstPost($firstPost)
                     ->save();
             } catch (Throwable $e) {
                 $this->catchError($e, 'fixing_posts_number_meta: '.$e->getMessage());
@@ -205,6 +190,7 @@ class MergeDiscussionHandler
                 ->posts
                 ->merge($posts)
                 ->sortBy('created_at')
+                /** @phpstan-ignore-next-line */
                 ->map(function (Post $post) use (&$number, $discussion) {
                     $number++;
 

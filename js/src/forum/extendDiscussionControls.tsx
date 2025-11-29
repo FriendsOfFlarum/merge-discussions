@@ -13,7 +13,7 @@ export default function extendDiscussionControls() {
 
     items.add(
       'fof-merge',
-      <Button icon="fas fa-code-branch fa-flip-vertical" onclick={() => app.modal.show(DiscussionMergeModal, { discussion })}>
+      <Button icon="fas fa-code-branch fa-flip-vertical" onclick={() => app.modal.show(DiscussionMergeModal as any, { discussion })}>
         {app.translator.trans('fof-merge-discussions.forum.discussion.merge')}
       </Button>
     );

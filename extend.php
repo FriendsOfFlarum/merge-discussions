@@ -11,8 +11,8 @@
 
 namespace FoF\MergeDiscussions;
 
-use Flarum\Api\Serializer\DiscussionSerializer;
-use Flarum\Database\AbstractModel;
+use Flarum\Api\Resource\DiscussionResource;
+use Flarum\Api\Schema;
 use Flarum\Extend;
 use Flarum\Http\Middleware\HandleErrors;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
@@ -27,9 +27,8 @@ return [
         ->js(__DIR__.'/js/dist/admin.js'),
     new Extend\Locales(__DIR__.'/resources/locale'),
 
-    (new Extend\Routes('api'))
-        ->get('/discussions/{id}/merge', 'fof.merge-discussions.preview', Api\Controllers\MergePreviewController::class)
-        ->post('/discussions/{id}/merge', 'fof.merge-discussions.run', Api\Controllers\MergeController::class),
+    (new Extend\ApiResource(DiscussionResource::class))
+        ->endpoints(Api\Resource\MergeDiscussionEndpoints::class),
 
     (new Extend\Post())
         ->type(DiscussionMergePost::class),
@@ -38,10 +37,11 @@ return [
         ->listen(DiscussionWasMerged::class, Listeners\CreatePostWhenMerged::class)
         ->listen(DiscussionWasMerged::class, Listeners\NotifyParticipantsWhenMerged::class),
 
-    (new Extend\ApiSerializer(DiscussionSerializer::class))
-        ->attribute('canMerge', function (DiscussionSerializer $serializer, AbstractModel $discussion) {
-            return $serializer->getActor()->can('merge', $discussion);
-        }),
+    (new Extend\ApiResource(DiscussionResource::class))
+        ->fields(fn () => [
+            Schema\Boolean::make('canMerge')
+                ->get(fn ($discussion, $context) => $context->getActor()->can('merge', $discussion)),
+        ]),
 
     (new Extend\Settings())
         ->default('fof-merge-discussions.search_limit', 4)
@@ -51,7 +51,7 @@ return [
         ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
 
     (new Extend\Notification())
-        ->type(Notification\DiscussionMergedBlueprint::class, DiscussionSerializer::class, ['alert', 'email']),
+        ->type(Notification\DiscussionMergedBlueprint::class, ['alert', 'email']),
 
     (new Extend\Middleware('forum'))
         ->insertBefore(HandleErrors::class, Middleware\Redirection::class),

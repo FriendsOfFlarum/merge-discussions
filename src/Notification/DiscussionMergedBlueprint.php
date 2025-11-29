@@ -12,40 +12,22 @@
 namespace FoF\MergeDiscussions\Notification;
 
 use Flarum\Discussion\Discussion;
+use Flarum\Notification\AlertableInterface;
 use Flarum\Notification\Blueprint\BlueprintInterface;
 use Flarum\Notification\MailableInterface;
 use Flarum\User\User;
 use Illuminate\Support\Arr;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
-class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
+class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface, AlertableInterface
 {
-    /**
-     * @var Discussion
-     */
-    public $discussion;
-
-    /**
-     * @var User
-     */
-    public $actor;
-
-    /**
-     * @var array
-     */
-    public $mergedDiscussion;
-
-    public function __construct(Discussion $discussion, User $actor, array $mergedDiscussion)
+    public function __construct(public Discussion $discussion, public User $actor, public array $mergedDiscussion)
     {
-        $this->discussion = $discussion;
-        $this->actor = $actor;
-        $this->mergedDiscussion = $mergedDiscussion;
     }
 
     /**
      * Get the user that sent the notification.
      */
-    public function getFromUser()
+    public function getFromUser(): ?\Flarum\User\User
     {
         return $this->actor;
     }
@@ -53,7 +35,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     /**
      * Get the model that is the subject of this activity.
      */
-    public function getSubject()
+    public function getSubject(): ?\Flarum\Database\AbstractModel
     {
         return $this->discussion;
     }
@@ -61,7 +43,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
     /**
      * Get the data to be stored in the notification.
      */
-    public function getData()
+    public function getData(): mixed
     {
         return [
             'merged_title' => Arr::get($this->mergedDiscussion, 'title'),
@@ -74,7 +56,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      *
      * @return string
      */
-    public static function getType()
+    public static function getType(): string
     {
         return 'discussionMerged';
     }
@@ -84,7 +66,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      *
      * @return string
      */
-    public static function getSubjectModel()
+    public static function getSubjectModel(): string
     {
         return Discussion::class;
     }
@@ -94,9 +76,9 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      *
      * @return array
      */
-    public function getEmailView()
+    public function getEmailViews(): array
     {
-        return ['text' => 'fof-merge-discussions::emails.discussionMerged'];
+        return ['text' => 'fof-merge-discussions::email.plain.discussionMerged', 'html' => 'fof-merge-discussions::email.html.discussionMerged'];
     }
 
     /**
@@ -104,7 +86,7 @@ class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface
      *
      * @return string
      */
-    public function getEmailSubject(TranslatorInterface $translator)
+    public function getEmailSubject(\Flarum\Locale\TranslatorInterface $translator): string
     {
         return $translator->trans('fof-merge-discussions.email.merged.subject', [
             '{display_name}'            => $this->actor->display_name,
