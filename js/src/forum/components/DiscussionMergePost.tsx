@@ -40,7 +40,7 @@ export default class DiscussionMergePost extends EventPost {
   descriptionData() {
     const data = {
       count: <strong>{this.attrs.mergeCount}</strong>,
-      titles: <em>{this.attrs.mergeTitles}</em>
+      titles: <em>{this.attrs.mergeTitles}</em>,
     };
 
     return data;

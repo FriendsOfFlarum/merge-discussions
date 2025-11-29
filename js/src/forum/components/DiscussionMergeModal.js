@@ -5,7 +5,7 @@ import IndexPage from 'flarum/forum/components/IndexPage';
 import Button from 'flarum/common/components/Button';
 import FormModal from 'flarum/common/components/FormModal';
 import PostStreamState from 'flarum/forum/states/PostStreamState';
-import GlobalSearchState from 'flarum/forum/states/GlobalSearchState';
+import SearchState from 'flarum/common/states/SearchState';
 import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
 
@@ -33,7 +33,7 @@ export default class DiscussionMergeModal extends FormModal {
 
     this.loadingPreview = false;
 
-    this.search = new GlobalSearchState();
+    this.searchState = new SearchState();
 
     // Lazy load PostStream component
     this.PostStream = null;
@@ -127,7 +127,7 @@ export default class DiscussionMergeModal extends FormModal {
             })}
           </p>
           <div className={classList('FormGroup', this.disabled() && 'hidden')}>
-            <DiscussionSearch state={this.search} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
+            <DiscussionSearch state={this.searchState} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
           </div>
           <div className="Form-group MergeDiscussions-Discussions">
             <ul>

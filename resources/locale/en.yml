@@ -2,6 +2,7 @@ fof-merge-discussions:
   forum:
     modal:
       title: Merge Discussions
+      search_discussions_placeholder: Search discussions...
 
       ordering_heading: Merge ordering
       ordering_date_label: Merge posts by creation date

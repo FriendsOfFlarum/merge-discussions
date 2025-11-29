@@ -66,14 +66,6 @@ class MergePreviewTest extends TestCase
             ])
         );
 
-        if ($response->getStatusCode() !== 200) {
-            $body = json_decode($response->getBody()->getContents(), true);
-            if (isset($body['errors'])) {
-                echo "\n\nERROR: " . json_encode($body['errors'], JSON_PRETTY_PRINT) . "\n\n";
-            }
-        }
-
-        // Should return 200 OK
         $this->assertEquals(200, $response->getStatusCode());
     }
 
@@ -90,47 +82,6 @@ class MergePreviewTest extends TestCase
         );
 
         $data = json_decode($response->getBody()->getContents(), true);
-
-        echo "\n\n=== Preview Response ===\n";
-        echo "Status: " . $response->getStatusCode() . "\n";
-        echo "Response keys: " . implode(', ', array_keys($data)) . "\n";
-
-        if (isset($data['data'])) {
-            echo "Data type: " . ($data['data']['type'] ?? 'unknown') . "\n";
-            echo "Data id: " . ($data['data']['id'] ?? 'unknown') . "\n";
-
-            if (isset($data['data']['relationships'])) {
-                echo "Relationships: " . implode(', ', array_keys($data['data']['relationships'])) . "\n";
-
-                if (isset($data['data']['relationships']['posts'])) {
-                    echo "Posts relationship exists: YES\n";
-                    if (isset($data['data']['relationships']['posts']['data'])) {
-                        echo "Posts data count: " . count($data['data']['relationships']['posts']['data']) . "\n";
-                        echo "Post IDs: " . implode(', ', array_column($data['data']['relationships']['posts']['data'], 'id')) . "\n";
-                    } else {
-                        echo "Posts data: MISSING\n";
-                    }
-                } else {
-                    echo "Posts relationship: MISSING\n";
-                }
-            } else {
-                echo "Relationships: MISSING\n";
-            }
-        }
-
-        if (isset($data['included'])) {
-            echo "Included count: " . count($data['included']) . "\n";
-            $postCount = count(array_filter($data['included'], fn($i) => $i['type'] === 'posts'));
-            echo "Included posts count: " . $postCount . "\n";
-        } else {
-            echo "Included: MISSING\n";
-        }
-
-        if (isset($data['errors'])) {
-            echo "\n=== ERRORS ===\n";
-            echo json_encode($data['errors'], JSON_PRETTY_PRINT) . "\n";
-        }
-        echo "=== End Preview Response ===\n\n";
 
         $this->assertArrayHasKey('data', $data);
         $this->assertEquals('discussions', $data['data']['type']);
