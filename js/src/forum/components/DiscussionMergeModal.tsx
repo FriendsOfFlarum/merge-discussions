@@ -8,14 +8,31 @@ import PostStreamState from 'flarum/forum/states/PostStreamState';
 import SearchState from 'flarum/common/states/SearchState';
 import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
+import type Discussion from 'flarum/common/models/Discussion';
+import type Mithril from 'mithril';
 
 import DiscussionSearch from './DiscussionSearch';
 import ItemList from 'flarum/common/utils/ItemList';
 import Icon from 'flarum/common/components/Icon';
 import Tooltip from 'flarum/common/components/Tooltip';
 
-export default class DiscussionMergeModal extends FormModal {
-  oninit(vnode) {
+export interface DiscussionMergeModalAttrs {
+  discussion: Discussion;
+  preselect?: Discussion;
+}
+
+export default class DiscussionMergeModal extends FormModal<any> {
+  discussion!: Discussion;
+  type!: Stream<string>;
+  order!: Stream<string>;
+  merging!: Discussion[];
+  results!: any[];
+  preview!: any;
+  loadingPreview!: boolean;
+  searchState!: SearchState;
+  PostStream!: any;
+
+  oninit(vnode: Mithril.Vnode<any, this>): void {
     super.oninit(vnode);
 
     this.discussion = this.attrs.discussion;
@@ -43,7 +60,7 @@ export default class DiscussionMergeModal extends FormModal {
     });
   }
 
-  onready() {
+  onready(): void {
     this.$('.Search-input .FormControl').focus();
   }
 
@@ -179,7 +196,7 @@ export default class DiscussionMergeModal extends FormModal {
     return this.type() === 'from' && this.merging.length !== 0;
   }
 
-  select(discussion) {
+  select(discussion: Discussion): void {
     if (discussion && discussion.id() === this.discussion.id()) return;
 
     if (!this.merging.includes(discussion) && !this.disabled()) {
@@ -188,19 +205,19 @@ export default class DiscussionMergeModal extends FormModal {
     }
   }
 
-  remove(discussion) {
+  remove(discussion: Discussion): void {
     delete this.preview;
 
     this.merging.splice(this.merging.indexOf(this.merging.filter((d) => d.id() === discussion.id())[0]), 1);
   }
 
-  changeType(key) {
+  changeType(key: string): void {
     this.type(key);
 
     if (this.merging.length > 1) this.merging = [];
   }
 
-  changeOrdering(key) {
+  changeOrdering(key: string): void {
     this.order(key);
     if (this.preview) delete this.preview;
   }
@@ -210,20 +227,20 @@ export default class DiscussionMergeModal extends FormModal {
 
     return app
       .request(this.getRequestData('GET'))
-      .then((payload) => {
+      .then((payload: any) => {
         let number = 1;
 
         if (payload.included) payload.included.map(app.store.pushObject.bind(app.store));
 
-        let posts = payload.data.relationships.posts.data.map((record) => app.store.getById('posts', record.id));
+        let posts = payload.data.relationships.posts.data.map((record: any) => app.store.getById('posts', record.id));
 
         // apply date-sort only if ordering === 'date'
         if (this.order() === 'date') {
-          posts.sort((a, b) => a.createdAt() - b.createdAt());
+          posts.sort((a: any, b: any) => a.createdAt() - b.createdAt());
         }
 
         // then renumber & rebuild the relationship array
-        posts.forEach((p, i) => {
+        posts.forEach((p: any, i: number) => {
           p.number(i + 1);
           payload.data.relationships.posts.data[i] = {
             type: 'posts',
@@ -231,13 +248,13 @@ export default class DiscussionMergeModal extends FormModal {
           };
         });
 
-        const discussion = app.store.createRecord(payload.data.type, payload.data);
+        const discussion = app.store.createRecord(payload.data.type, payload.data) as any;
         discussion.payload = payload;
 
         this.loadingPreview = false;
         const includedPosts = discussion.posts();
 
-        this.preview = new PostStreamState(discussion, includedPosts);
+        this.preview = new PostStreamState(discussion as Discussion, includedPosts);
 
         // Set the visible range to show all posts (disable pagination in preview)
         this.preview.visibleStart = 0;
@@ -248,7 +265,7 @@ export default class DiscussionMergeModal extends FormModal {
       .catch(() => (this.loadingPreview = false));
   }
 
-  submit(e) {
+  submit(e: Event) {
     e.preventDefault();
 
     this.loading = true;
@@ -260,14 +277,14 @@ export default class DiscussionMergeModal extends FormModal {
 
         if (app.current.matches(DiscussionPage)) {
           if (this.type() === 'target') {
-            await app.store.find('discussions', final.id());
+            await app.store.find('discussions', final.id() || '');
 
             await app.current.get('stream').update();
           } else {
             m.route.set(app.route.discussion(final));
           }
         } else if (app.current.matches(IndexPage)) {
-          await app.store.find('discussions', final.id());
+          await app.store.find('discussions', final.id() || '');
         }
 
         if (this.type() === 'target') {
@@ -286,16 +303,16 @@ export default class DiscussionMergeModal extends FormModal {
       .then(this.loaded.bind(this));
   }
 
-  getRequestData(method = 'POST') {
+  getRequestData(method = 'POST'): any {
     const isTarget = this.type() === 'target';
-    const endpoint = isTarget ? this.discussion.apiEndpoint() : this.merging[0].apiEndpoint();
+    const endpoint = isTarget ? (this.discussion as any).apiEndpoint() : (this.merging[0] as any).apiEndpoint();
     const merging = isTarget ? this.merging.map((d) => d.id()) : this.discussion.id();
     const ordering = this.order();
 
     // Convert array to comma-separated string for GET requests
     const byIdsParam = method === 'GET' ? (Array.isArray(merging) ? merging.join(',') : String(merging)) : undefined;
 
-    const requestData = {
+    const requestData: any = {
       method,
       url: `${app.forum.attribute('apiUrl')}${endpoint}/merge${method === 'GET' ? '-preview' : ''}`,
       errorHandler: this.onerror.bind(this),

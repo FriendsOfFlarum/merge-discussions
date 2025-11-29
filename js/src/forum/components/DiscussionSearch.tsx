@@ -4,22 +4,38 @@ import ItemList from 'flarum/common/utils/ItemList';
 import extractText from 'flarum/common/utils/extractText';
 import Icon from 'flarum/common/components/Icon';
 import DiscussionSearchSource from './DiscussionSearchSource';
+import type Discussion from 'flarum/common/models/Discussion';
+import type Mithril from 'mithril';
 
-export default class DiscussionSearch extends Search {
-  oncreate(vnode) {
+export interface DiscussionSearchAttrs extends Mithril.Attributes {
+  state: any;
+  onSelect: (discussion: Discussion) => void;
+  ignore: string;
+}
+
+export default class DiscussionSearch extends Search<DiscussionSearchAttrs> {
+  oncreate(vnode: Mithril.VnodeDOM<DiscussionSearchAttrs, this>): void {
     super.oncreate(vnode);
 
     this.navigator.onSelect(() => {
-      this.attrs.onSelect(app.store.getById('discussions', this.getItem(this.index).attr('data-id')));
+      const item = this.getItem(this.index);
+      const dataId = item?.attr('data-id');
+      if (dataId) {
+        const discussion = app.store.getById<Discussion>('discussions', dataId);
+        if (discussion) {
+          this.attrs.onSelect(discussion);
+        }
+      }
       m.redraw();
     });
   }
 
-  view() {
-    const vdom = super.view();
+  view(): Mithril.Vnode {
+    const vdom = super.view() as Mithril.Vnode;
 
     // Inject the search icon into the Search-input div
-    const searchInput = vdom.children.find((child) => child?.attrs?.className?.includes('Search-input'));
+    const children = Array.isArray(vdom.children) ? vdom.children : [];
+    const searchInput = children.find((child: any) => child?.attrs?.className?.includes('Search-input')) as any;
     if (searchInput) {
       // Wrap the existing input in an Input container
       const originalInput = searchInput.children[0];
@@ -33,7 +49,8 @@ export default class DiscussionSearch extends Search {
     }
 
     // Add custom class and use custom placeholder
-    vdom.attrs.className = `MergeDiscussions-Search ${vdom.attrs.className}`;
+    if (!vdom.attrs) (vdom as any).attrs = {};
+    (vdom.attrs as any).className = `MergeDiscussions-Search ${(vdom.attrs as any).className || ''}`;
 
     // Update placeholder text in the input element
     const input = this.findInput(vdom);
@@ -52,7 +69,7 @@ export default class DiscussionSearch extends Search {
     return vdom;
   }
 
-  findClearButton(vnode) {
+  findClearButton(vnode: any): any {
     if (vnode?.tag === 'button' && vnode?.attrs?.className?.includes('Search-clear')) return vnode;
     if (vnode?.children) {
       for (const child of vnode.children) {
@@ -63,7 +80,7 @@ export default class DiscussionSearch extends Search {
     return null;
   }
 
-  findInput(vnode) {
+  findInput(vnode: any): any {
     if (vnode?.tag === 'input') return vnode;
     if (vnode?.children) {
       for (const child of vnode.children) {
@@ -74,23 +91,23 @@ export default class DiscussionSearch extends Search {
     return null;
   }
 
-  updateMaxHeight() {
+  updateMaxHeight(): void {
     // Since we wrapped the input in an additional div, we need to adjust the selector
     const resultsElementMargin = 14;
-    const inputControl = this.element.querySelector('.Search-input .FormControl');
+    const inputControl = this.element.querySelector('.Search-input .FormControl') as HTMLElement | null;
 
     if (!inputControl) return;
 
     const maxHeight = window.innerHeight - inputControl.getBoundingClientRect().bottom - resultsElementMargin;
-    const resultsElement = this.element.querySelector('.Search-results');
+    const resultsElement = this.element.querySelector('.Search-results') as HTMLElement | null;
 
     if (resultsElement) {
       resultsElement.style.setProperty('max-height', `${maxHeight}px`);
     }
   }
 
-  sourceItems() {
-    const items = new ItemList();
+  sourceItems(): ItemList<any> {
+    const items = new ItemList<any>();
 
     items.add('discussions', new DiscussionSearchSource(this.attrs.onSelect, this.attrs.ignore));
 
