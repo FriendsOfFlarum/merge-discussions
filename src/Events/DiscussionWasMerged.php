@@ -12,7 +12,6 @@
 namespace FoF\MergeDiscussions\Events;
 
 use Flarum\Discussion\Discussion;
-use Flarum\Post\Post;
 use Flarum\User\User;
 use Illuminate\Support\Collection;
 

@@ -32,7 +32,7 @@ class MergeDiscussionValidator extends AbstractValidator
     ];
 
     protected array $messages = [
-        'posts.filled' => 'The selected discussion(s) have no posts to merge. Discussions must have at least one post to be merged.',
+        'posts.filled'               => 'The selected discussion(s) have no posts to merge. Discussions must have at least one post to be merged.',
         'merging_discussions.filled' => 'You must select at least one discussion to merge.',
         'merging_discussions.exists' => 'One or more of the selected discussions do not exist.',
     ];

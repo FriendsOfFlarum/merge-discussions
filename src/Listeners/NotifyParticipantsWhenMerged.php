@@ -22,7 +22,7 @@ class NotifyParticipantsWhenMerged
         protected Queue $queue
     ) {
     }
-    
+
     public function handle(DiscussionWasMerged $event): void
     {
         $mergedDiscussions = new Collection();

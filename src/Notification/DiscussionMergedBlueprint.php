@@ -11,13 +11,12 @@
 
 namespace FoF\MergeDiscussions\Notification;
 
-use Flarum\Notification\AlertableInterface;
 use Flarum\Discussion\Discussion;
+use Flarum\Notification\AlertableInterface;
 use Flarum\Notification\Blueprint\BlueprintInterface;
 use Flarum\Notification\MailableInterface;
 use Flarum\User\User;
 use Illuminate\Support\Arr;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DiscussionMergedBlueprint implements BlueprintInterface, MailableInterface, AlertableInterface
 {

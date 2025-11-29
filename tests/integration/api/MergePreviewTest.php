@@ -13,11 +13,11 @@ namespace FoF\MergeDiscussions\Tests\integration\api;
 
 use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
+use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
-use PHPUnit\Framework\Attributes\Test;
 use Flarum\User\User;
-use Flarum\Post\Post;
+use PHPUnit\Framework\Attributes\Test;
 
 class MergePreviewTest extends TestCase
 {
@@ -61,7 +61,7 @@ class MergePreviewTest extends TestCase
             $this->request('GET', '/api/discussions/100/merge-preview', [
                 'authenticatedAs' => 3,
             ])->withQueryParams([
-                'byIds' => '101',
+                'byIds'      => '101',
                 'byOrdering' => 'date',
             ])
         );
@@ -76,7 +76,7 @@ class MergePreviewTest extends TestCase
             $this->request('GET', '/api/discussions/100/merge-preview', [
                 'authenticatedAs' => 3,
             ])->withQueryParams([
-                'byIds' => '101',
+                'byIds'      => '101',
                 'byOrdering' => 'date',
             ])
         );
@@ -96,7 +96,7 @@ class MergePreviewTest extends TestCase
             $this->request('GET', '/api/discussions/100/merge-preview', [
                 'authenticatedAs' => 3,
             ])->withQueryParams([
-                'byIds' => '101',
+                'byIds'      => '101',
                 'byOrdering' => 'date',
             ])
         );
@@ -107,7 +107,7 @@ class MergePreviewTest extends TestCase
         $mergeResponse = $this->send(
             $this->request('POST', '/api/discussions/100/merge', [
                 'json' => [
-                    'ids' => [101],
+                    'ids'      => [101],
                     'ordering' => 'date',
                 ],
                 'authenticatedAs' => 3,

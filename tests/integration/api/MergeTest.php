@@ -13,12 +13,12 @@ namespace FoF\MergeDiscussions\Tests\integration\api;
 
 use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
+use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
+use Flarum\User\User;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Flarum\User\User;
-use Flarum\Post\Post;
 
 class MergeTest extends TestCase
 {
@@ -121,7 +121,7 @@ class MergeTest extends TestCase
             $this->request('GET', '/api/discussions/1/merge-preview', [
                 'authenticatedAs' => 3,
             ])->withQueryParams([
-                'byIds' => '2',
+                'byIds'      => '2',
                 'byOrdering' => 'date',
             ])
         );
@@ -160,7 +160,6 @@ class MergeTest extends TestCase
 
         $this->assertEquals(403, $response->getStatusCode());
     }
-
 
     public static function discussionMergeData(): array
     {
@@ -468,5 +467,4 @@ class MergeTest extends TestCase
         $this->assertEquals(301, $response->getStatusCode());
         $this->assertEquals('/d/1', $response->getHeader('Location')[0]);
     }
-
 }

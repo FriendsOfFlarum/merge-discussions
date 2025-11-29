@@ -54,16 +54,16 @@ class MergeDiscussionEndpoints
                     // Ensure IDs array is not empty after processing
                     if (empty($ids)) {
                         throw new \Flarum\Foundation\ValidationException([
-                            'byIds' => 'The byIds parameter is required and must contain at least one discussion ID.'
+                            'byIds' => 'The byIds parameter is required and must contain at least one discussion ID.',
                         ]);
                     }
 
                     // Remove empty strings from the array
-                    $ids = array_filter($ids, fn($id) => $id !== '' && $id !== null);
+                    $ids = array_filter($ids, fn ($id) => $id !== '' && $id !== null);
 
                     if (empty($ids)) {
                         throw new \Flarum\Foundation\ValidationException([
-                            'byIds' => 'No valid discussion IDs provided.'
+                            'byIds' => 'No valid discussion IDs provided.',
                         ]);
                     }
 
@@ -110,7 +110,7 @@ class MergeDiscussionEndpoints
                     foreach ($mergedPosts as $post) {
                         $primary[0]['relationships']['posts']['data'][] = [
                             'type' => 'posts',
-                            'id' => (string) $post->id
+                            'id'   => (string) $post->id,
                         ];
                     }
 
@@ -118,7 +118,7 @@ class MergeDiscussionEndpoints
                     $included = array_merge($included, $postPrimary, $postIncluded);
 
                     return new JsonResponse([
-                        'data' => $primary[0],
+                        'data'     => $primary[0],
                         'included' => $included,
                     ]);
                 }),
