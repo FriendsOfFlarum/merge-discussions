@@ -198,56 +198,56 @@ class MergeTest extends TestCase
         $this->assertEquals(10, $discussion->comment_count);
         $this->assertEquals(2, $discussion->participant_count);
 
-        $posts = $discussion->posts()->orderBy('created_at', 'asc')->get();
+        $posts = $discussion->posts()->orderBy('created_at', 'asc')->get()->values();
 
         $this->assertEquals(11, $posts->count());
 
         // Check the posts were ordered as expected by date/time
-        $this->assertEquals('Post 1 in Discussion 1', $posts[0]->content);
-        $this->assertEquals('comment', $posts[0]->type);
-        $this->assertEquals(1, $posts[0]->number);
+        $this->assertEquals('Post 1 in Discussion 1', $posts->get(0)->content);
+        $this->assertEquals('comment', $posts->get(0)->type);
+        $this->assertEquals(1, $posts->get(0)->number);
 
-        $this->assertEquals('Post 1 in Discussion 2', $posts[1]->content);
-        $this->assertEquals('comment', $posts[1]->type);
-        $this->assertEquals(2, $posts[1]->number);
+        $this->assertEquals('Post 1 in Discussion 2', $posts->get(1)->content);
+        $this->assertEquals('comment', $posts->get(1)->type);
+        $this->assertEquals(2, $posts->get(1)->number);
 
-        $this->assertEquals('Post 2 in Discussion 1', $posts[2]->content);
-        $this->assertEquals('comment', $posts[2]->type);
-        $this->assertEquals(3, $posts[2]->number);
+        $this->assertEquals('Post 2 in Discussion 1', $posts->get(2)->content);
+        $this->assertEquals('comment', $posts->get(2)->type);
+        $this->assertEquals(3, $posts->get(2)->number);
 
-        $this->assertEquals('Post 2 in Discussion 2', $posts[3]->content);
-        $this->assertEquals('comment', $posts[3]->type);
-        $this->assertEquals(4, $posts[3]->number);
+        $this->assertEquals('Post 2 in Discussion 2', $posts->get(3)->content);
+        $this->assertEquals('comment', $posts->get(3)->type);
+        $this->assertEquals(4, $posts->get(3)->number);
 
-        $this->assertEquals('Post 3 in Discussion 1', $posts[4]->content);
-        $this->assertEquals('comment', $posts[4]->type);
-        $this->assertEquals(5, $posts[4]->number);
+        $this->assertEquals('Post 3 in Discussion 1', $posts->get(4)->content);
+        $this->assertEquals('comment', $posts->get(4)->type);
+        $this->assertEquals(5, $posts->get(4)->number);
 
-        $this->assertEquals('Post 3 in Discussion 2', $posts[5]->content);
-        $this->assertEquals('comment', $posts[5]->type);
-        $this->assertEquals(6, $posts[5]->number);
+        $this->assertEquals('Post 3 in Discussion 2', $posts->get(5)->content);
+        $this->assertEquals('comment', $posts->get(5)->type);
+        $this->assertEquals(6, $posts->get(5)->number);
 
-        $this->assertEquals('Post 4 in Discussion 1', $posts[6]->content);
-        $this->assertEquals('comment', $posts[6]->type);
-        $this->assertEquals(7, $posts[6]->number);
+        $this->assertEquals('Post 4 in Discussion 1', $posts->get(6)->content);
+        $this->assertEquals('comment', $posts->get(6)->type);
+        $this->assertEquals(7, $posts->get(6)->number);
 
-        $this->assertEquals('Post 4 in Discussion 2', $posts[7]->content);
-        $this->assertEquals('comment', $posts[7]->type);
-        $this->assertEquals(8, $posts[7]->number);
+        $this->assertEquals('Post 4 in Discussion 2', $posts->get(7)->content);
+        $this->assertEquals('comment', $posts->get(7)->type);
+        $this->assertEquals(8, $posts->get(7)->number);
 
-        $this->assertEquals('Post 5 in Discussion 2', $posts[8]->content);
-        $this->assertEquals('comment', $posts[8]->type);
-        $this->assertEquals(9, $posts[8]->number);
+        $this->assertEquals('Post 5 in Discussion 2', $posts->get(8)->content);
+        $this->assertEquals('comment', $posts->get(8)->type);
+        $this->assertEquals(9, $posts->get(8)->number);
 
-        $this->assertEquals('Post 5 in Discussion 1', $posts[9]->content);
-        $this->assertEquals('comment', $posts[9]->type);
-        $this->assertEquals(10, $posts[9]->number);
+        $this->assertEquals('Post 5 in Discussion 1', $posts->get(9)->content);
+        $this->assertEquals('comment', $posts->get(9)->type);
+        $this->assertEquals(10, $posts->get(9)->number);
 
-        $this->assertEquals('discussionMerged', $posts[10]->type);
-        $this->assertEquals(11, $posts[10]->number);
+        $this->assertEquals('discussionMerged', $posts->get(10)->type);
+        $this->assertEquals(11, $posts->get(10)->number);
 
         // Verify the merge post content
-        $mergePost = $posts[10];
+        $mergePost = $posts->get(10);
         $this->assertInstanceOf(\FoF\MergeDiscussions\Posts\DiscussionMergePost::class, $mergePost);
         $this->assertIsArray($mergePost->content);
         $this->assertArrayHasKey('count', $mergePost->content);
@@ -299,54 +299,54 @@ class MergeTest extends TestCase
         $this->assertEquals(10, $discussion->comment_count);
         $this->assertEquals(2, $discussion->participant_count);
 
-        $posts = $discussion->posts()->get();
+        $posts = $discussion->posts()->get()->values();
 
         $this->assertEquals(11, $posts->count());
 
         // check the posts were ordered as expected
 
-        $this->assertEquals("Post 1 in Discussion $to", $posts[0]->content);
-        $this->assertEquals('comment', $posts[0]->type);
-        $this->assertEquals(1, $posts[0]->number);
+        $this->assertEquals("Post 1 in Discussion $to", $posts->get(0)->content);
+        $this->assertEquals('comment', $posts->get(0)->type);
+        $this->assertEquals(1, $posts->get(0)->number);
 
-        $this->assertEquals("Post 2 in Discussion $to", $posts[1]->content);
-        $this->assertEquals('comment', $posts[1]->type);
-        $this->assertEquals(2, $posts[1]->number);
+        $this->assertEquals("Post 2 in Discussion $to", $posts->get(1)->content);
+        $this->assertEquals('comment', $posts->get(1)->type);
+        $this->assertEquals(2, $posts->get(1)->number);
 
-        $this->assertEquals("Post 3 in Discussion $to", $posts[2]->content);
-        $this->assertEquals('comment', $posts[2]->type);
-        $this->assertEquals(3, $posts[2]->number);
+        $this->assertEquals("Post 3 in Discussion $to", $posts->get(2)->content);
+        $this->assertEquals('comment', $posts->get(2)->type);
+        $this->assertEquals(3, $posts->get(2)->number);
 
-        $this->assertEquals("Post 4 in Discussion $to", $posts[3]->content);
-        $this->assertEquals('comment', $posts[3]->type);
-        $this->assertEquals(4, $posts[3]->number);
+        $this->assertEquals("Post 4 in Discussion $to", $posts->get(3)->content);
+        $this->assertEquals('comment', $posts->get(3)->type);
+        $this->assertEquals(4, $posts->get(3)->number);
 
-        $this->assertEquals("Post 5 in Discussion $to", $posts[4]->content);
-        $this->assertEquals('comment', $posts[4]->type);
-        $this->assertEquals(5, $posts[4]->number);
+        $this->assertEquals("Post 5 in Discussion $to", $posts->get(4)->content);
+        $this->assertEquals('comment', $posts->get(4)->type);
+        $this->assertEquals(5, $posts->get(4)->number);
 
-        $this->assertEquals("Post 1 in Discussion $from", $posts[5]->content);
-        $this->assertEquals('comment', $posts[5]->type);
-        $this->assertEquals(6, $posts[5]->number);
+        $this->assertEquals("Post 1 in Discussion $from", $posts->get(5)->content);
+        $this->assertEquals('comment', $posts->get(5)->type);
+        $this->assertEquals(6, $posts->get(5)->number);
 
-        $this->assertEquals("Post 2 in Discussion $from", $posts[6]->content);
-        $this->assertEquals('comment', $posts[6]->type);
-        $this->assertEquals(7, $posts[6]->number);
+        $this->assertEquals("Post 2 in Discussion $from", $posts->get(6)->content);
+        $this->assertEquals('comment', $posts->get(6)->type);
+        $this->assertEquals(7, $posts->get(6)->number);
 
-        $this->assertEquals("Post 3 in Discussion $from", $posts[7]->content);
-        $this->assertEquals('comment', $posts[7]->type);
-        $this->assertEquals(8, $posts[7]->number);
+        $this->assertEquals("Post 3 in Discussion $from", $posts->get(7)->content);
+        $this->assertEquals('comment', $posts->get(7)->type);
+        $this->assertEquals(8, $posts->get(7)->number);
 
-        $this->assertEquals("Post 4 in Discussion $from", $posts[8]->content);
-        $this->assertEquals('comment', $posts[8]->type);
-        $this->assertEquals(9, $posts[8]->number);
+        $this->assertEquals("Post 4 in Discussion $from", $posts->get(8)->content);
+        $this->assertEquals('comment', $posts->get(8)->type);
+        $this->assertEquals(9, $posts->get(8)->number);
 
-        $this->assertEquals("Post 5 in Discussion $from", $posts[9]->content);
-        $this->assertEquals('comment', $posts[9]->type);
-        $this->assertEquals(10, $posts[9]->number);
+        $this->assertEquals("Post 5 in Discussion $from", $posts->get(9)->content);
+        $this->assertEquals('comment', $posts->get(9)->type);
+        $this->assertEquals(10, $posts->get(9)->number);
 
-        $this->assertEquals('discussionMerged', $posts[10]->type);
-        $this->assertEquals(11, $posts[10]->number);
+        $this->assertEquals('discussionMerged', $posts->get(10)->type);
+        $this->assertEquals(11, $posts->get(10)->number);
 
         // Test the merged discussion has a 301 redirect to the target discussion
 
