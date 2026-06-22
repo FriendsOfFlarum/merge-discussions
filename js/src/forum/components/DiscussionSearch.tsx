@@ -10,10 +10,12 @@ import type Mithril from 'mithril';
 export interface DiscussionSearchAttrs extends Mithril.Attributes {
   state: any;
   onSelect: (discussion: Discussion) => void;
-  ignore: string;
+  ignore?: (discussion: Discussion) => boolean;
 }
 
 export default class DiscussionSearch extends Search<DiscussionSearchAttrs> {
+  protected static MIN_SEARCH_LEN = 1;
+
   oncreate(vnode: Mithril.VnodeDOM<DiscussionSearchAttrs, this>): void {
     super.oncreate(vnode);
 
