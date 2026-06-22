@@ -134,7 +134,7 @@ export default class DiscussionMergeModal extends FormModal<any> {
     return (
       <div className="Modal-body">
         <Form>
-          <div className="Forum-group">{this.orderItems().toArray()}</div>
+          <div className="Form-group">{this.orderItems().toArray()}</div>
           <div className="Form-group">{this.typeItems().toArray()}</div>
           <div className={classList('FormGroup', this.disabled() && 'hidden')}>
             <p className="help">
@@ -144,18 +144,22 @@ export default class DiscussionMergeModal extends FormModal<any> {
             </p>
             <DiscussionSearch state={this.searchState} onSelect={this.select.bind(this)} ignore={this.shouldIgnoreResult.bind(this)} />
           </div>
-          <div className="Form-group MergeDiscussions-Discussions">
-            <ul>
-              {this.merging.map((d) => (
-                <li>
-                  <i className="fas fa-trash DeleteEntry-Button" onclick={() => this.remove(d)} />
-                  <a href={`${app.forum.attribute('baseUrl')}/d/${d.id()}`} target="_blank">
-                    <i>{d.id()}</i>~ {d.title()}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+
+          {!!this.merging.length && (
+            <div className="MergeDiscussions-Discussions">
+              <ul>
+                {this.merging.map((d) => (
+                  <li>
+                    <i className="fas fa-trash DeleteEntry-Button" onclick={() => this.remove(d)} />
+                    <a href={`${app.forum.attribute('baseUrl')}/d/${d.id()}`} target="_blank">
+                      <i>{d.id()}</i> ~ {d.title()}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="Form-group MergeDiscussions-Preview">
             <Button
               className="Button Button--danger"
