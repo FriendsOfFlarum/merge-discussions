@@ -1,18 +1,21 @@
 import app from 'flarum/forum/app';
+import { SearchSource } from 'flarum/forum/components/Search';
 import highlight from 'flarum/common/helpers/highlight';
 import type Discussion from 'flarum/common/models/Discussion';
 import type Mithril from 'mithril';
 
-export default class DiscussionSearchSource {
+export default class DiscussionSearchSource implements SearchSource {
   protected results: Map<string, Discussion[]> = new Map();
+  protected ignore: (discussion: Discussion) => boolean;
   protected onSelect: (discussion: Discussion) => void;
-  protected ignore: string;
+  protected minSearchLength = 3;
 
-  constructor(onSelect: (discussion: Discussion) => void, ignore: string) {
+  constructor(onSelect: (discussion: Discussion) => void, ignore?: (discussion: Discussion) => boolean, minSearchLength?: number) {
     this.results = new Map();
 
     this.onSelect = onSelect;
-    this.ignore = ignore;
+    this.ignore = ignore ?? (() => false);
+    this.minSearchLength = minSearchLength || this.minSearchLength;
   }
 
   search(query: string): Promise<void> {
@@ -29,7 +32,7 @@ export default class DiscussionSearchSource {
     const id = Number(query);
     const idStr = String(id);
 
-    if (!Number.isNaN(id) && idStr !== this.ignore) {
+    if (!Number.isNaN(id) && id > 0) {
       return app.store
         .find<Discussion>('discussions', idStr)
         .then((d) => {
@@ -38,11 +41,12 @@ export default class DiscussionSearchSource {
         .catch(() => {});
     }
 
+    if (query.length < this.minSearchLength) {
+      return Promise.resolve();
+    }
+
     return app.store.find<Discussion[]>('discussions', params).then((results) => {
-      this.results.set(
-        query,
-        results.filter((d) => d.id() !== this.ignore)
-      );
+      this.results.set(query, results);
     });
   }
 
@@ -51,7 +55,17 @@ export default class DiscussionSearchSource {
 
     const results = this.results.get(query) || [];
 
-    return results.map((discussion) => {
+    // Remove discussions that should be ignored (e.g. merge from/to target, discussions already selected).
+    // We do this in view instead of search to prevent issues from caching modified results.
+    const filteredResults = results.filter((discussion) => !this.ignore(discussion));
+
+    if (!filteredResults.length) {
+      return [
+        <li className="DiscussionSearchResult DiscussionSearchResult--noResults">{app.translator.trans('core.lib.search.no_results_text')}</li>,
+      ];
+    }
+
+    return filteredResults.map((discussion) => {
       const discussionId = discussion.id() || '';
       return (
         <li className="DiscussionSearchResult" data-index={'discussions' + discussionId} data-id={discussionId}>

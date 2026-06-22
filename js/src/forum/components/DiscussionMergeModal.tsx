@@ -26,7 +26,6 @@ export default class DiscussionMergeModal extends FormModal<any> {
   type!: Stream<string>;
   order!: Stream<string>;
   merging!: Discussion[];
-  results!: any[];
   preview!: any;
   loadingPreview!: boolean;
   searchState!: SearchState;
@@ -45,7 +44,6 @@ export default class DiscussionMergeModal extends FormModal<any> {
       this.merging.push(this.attrs.preselect);
     }
 
-    this.results = [];
     this.preview = null;
 
     this.loadingPreview = false;
@@ -138,13 +136,13 @@ export default class DiscussionMergeModal extends FormModal<any> {
         <Form>
           <div className="Forum-group">{this.orderItems().toArray()}</div>
           <div className="Form-group">{this.typeItems().toArray()}</div>
-          <p className="help">
-            {app.translator.trans(`fof-merge-discussions.forum.modal.type_${this.type()}_help_text`, {
-              title: this.discussion.title(),
-            })}
-          </p>
           <div className={classList('FormGroup', this.disabled() && 'hidden')}>
-            <DiscussionSearch state={this.searchState} onSelect={this.select.bind(this)} ignore={this.discussion.id()} />
+            <p className="help">
+              {app.translator.trans(`fof-merge-discussions.forum.modal.type_${this.type()}_help_text`, {
+                title: this.discussion.title(),
+              })}
+            </p>
+            <DiscussionSearch state={this.searchState} onSelect={this.select.bind(this)} ignore={this.shouldIgnoreResult.bind(this)} />
           </div>
           <div className="Form-group MergeDiscussions-Discussions">
             <ul>
@@ -333,5 +331,20 @@ export default class DiscussionMergeModal extends FormModal<any> {
     }
 
     return requestData;
+  }
+
+  /**
+   * Ignores the current discussion we're merging from/to, and any discussions already selected for merging.
+   * We need to maintain the same array reference for the ignore list, as it's passed to a constructor.
+   */
+  shouldIgnoreResult(discussion: Discussion): boolean {
+    const id = discussion.id() || '';
+    console.log(
+      'should ignore',
+      id,
+      this.discussion.id(),
+      this.merging.some((d) => d.id() === id)
+    );
+    return id === this.discussion.id() || this.merging.some((d) => d.id() === id);
   }
 }
