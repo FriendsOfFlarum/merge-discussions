@@ -13,7 +13,6 @@ export default class DiscussionMergeModal extends FormModal<any> {
     type: Stream<string>;
     order: Stream<string>;
     merging: Discussion[];
-    results: any[];
     preview: any;
     loadingPreview: boolean;
     searchState: SearchState;
@@ -35,4 +34,9 @@ export default class DiscussionMergeModal extends FormModal<any> {
     loadPreview(): Promise<boolean | void>;
     submit(e: Event): Promise<void>;
     getRequestData(method?: string): any;
+    /**
+     * Ignores the current discussion we're merging from/to, and any discussions already selected for merging.
+     * We need to maintain the same array reference for the ignore list, as it's passed to a constructor.
+     */
+    shouldIgnoreResult(discussion: Discussion): boolean;
 }
