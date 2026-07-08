@@ -13,6 +13,7 @@ namespace FoF\MergeDiscussions;
 
 use Flarum\Api\Resource\DiscussionResource;
 use Flarum\Api\Schema;
+use Flarum\Audit\AuditLogger;
 use Flarum\Extend;
 use Flarum\Http\Middleware\HandleErrors;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
@@ -56,4 +57,28 @@ return [
 
     (new Extend\Middleware('forum'))
         ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
+
+    (new Extend\Conditional())
+        ->whenExtensionEnabled('flarum-audit', fn () => [
+            (new \Flarum\Audit\Extend\Audit())
+                ->group('fof-merge-discussions')
+                ->register('discussion.merged_away', 'discussion.merged_into')
+                ->using(function () {
+                    // Merge dispatches multiple logs per event, so it uses a raw listener.
+                    resolve('events')->listen(DiscussionWasMerged::class, function (DiscussionWasMerged $event) {
+                        foreach ($event->mergedDiscussions as $discussion) {
+                            AuditLogger::log('discussion.merged_away', [
+                                'discussion_id'     => $discussion->id,
+                                'new_discussion_id' => $event->discussion->id,
+                            ]);
+                        }
+
+                        AuditLogger::log('discussion.merged_into', [
+                            'discussion_id'           => $event->discussion->id,
+                            'original_discussion_ids' => $event->mergedDiscussions->pluck('id')->all(),
+                            'post_count'              => $event->posts->count(),
+                        ]);
+                    });
+                }),
+        ]),
 ];

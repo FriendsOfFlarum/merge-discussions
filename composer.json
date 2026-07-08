@@ -59,6 +59,7 @@
         }
     },
     "require-dev": {
+        "flarum/audit": "2.x-dev",
         "flarum/phpstan": "^2.0.0",
         "flarum/testing": "^2.0.0"
     },
