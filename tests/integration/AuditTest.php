@@ -105,22 +105,18 @@ class AuditTest extends TestCase
         ], $log->payload);
         $this->assertEquals('127.0.0.1', $log->ip_address);
 
-        $log = AuditLog::query()->where('action', 'discussion.merged_away')->first();
-        $this->assertNotNull($log);
-        $this->assertEquals(1, $log->actor_id);
-        $this->assertEquals([
-            'discussion_id'     => 11,
-            'new_discussion_id' => 10,
-        ], $log->payload);
-        $this->assertEquals('127.0.0.1', $log->ip_address);
+        $awayLogs = AuditLog::query()->where('action', 'discussion.merged_away')->get();
+        $this->assertCount(2, $awayLogs);
 
-        $log = AuditLog::query()->where('action', 'discussion.merged_away')->skip(1)->first();
-        $this->assertNotNull($log);
-        $this->assertEquals(1, $log->actor_id);
-        $this->assertEquals([
-            'discussion_id'     => 12,
-            'new_discussion_id' => 10,
-        ], $log->payload);
-        $this->assertEquals('127.0.0.1', $log->ip_address);
+        foreach ($awayLogs as $log) {
+            $this->assertEquals(1, $log->actor_id);
+            $this->assertEquals('127.0.0.1', $log->ip_address);
+        }
+
+        // The two merged-away entries may be logged in any order, so assert on the set of payloads.
+        $this->assertEqualsCanonicalizing([
+            ['discussion_id' => 11, 'new_discussion_id' => 10],
+            ['discussion_id' => 12, 'new_discussion_id' => 10],
+        ], $awayLogs->pluck('payload')->all());
     }
 }
