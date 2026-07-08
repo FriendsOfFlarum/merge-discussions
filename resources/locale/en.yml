@@ -56,3 +56,13 @@ fof-merge-discussions:
 
         View it here {discussion_url} .
       subject: Your discussion "{merged_discussion_title}" was merged
+
+# Labels for the audit log entries this extension produces, rendered by the (optional)
+# flarum/audit browser. Defined under the flarum-audit namespace so the audit frontend
+# resolves them, but shipped here so they travel with the extension that owns the actions.
+flarum-audit:
+  lib:
+    browser:
+      discussion:
+        merged_away: Merged {discussion} into {new_discussion}
+        merged_into: Merged {post_count} posts from {original_discussion_ids_count} discussions into {discussion}
