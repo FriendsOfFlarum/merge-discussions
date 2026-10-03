@@ -299,7 +299,7 @@ class MergeTest extends TestCase
         $this->assertEquals(10, $discussion->comment_count);
         $this->assertEquals(2, $discussion->participant_count);
 
-        $posts = $discussion->posts()->get()->values();
+        $posts = $discussion->posts()->orderBy('number')->get()->values();
 
         $this->assertEquals(11, $posts->count());
 

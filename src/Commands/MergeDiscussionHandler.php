@@ -20,6 +20,7 @@ use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Events\MergingDiscussions;
 use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
+use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Collection as SupportCollection;
@@ -27,7 +28,13 @@ use Throwable;
 
 class MergeDiscussionHandler
 {
-    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator)
+    /**
+     * Posts written per UPDATE statement. Keeps each statement a bounded size
+     * however long the merged discussion is.
+     */
+    protected const RENUMBER_CHUNK_SIZE = 500;
+
+    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator, protected ConnectionInterface $db)
     {
     }
 
@@ -36,10 +43,6 @@ class MergeDiscussionHandler
         $discussion = $this->discussions->findOrFail($command->discussionId);
 
         $command->actor->assertCan('merge', $discussion);
-
-        if ($command->merge && $command->ordering === 'date') {
-            $this->fixPostsNumber($discussion);
-        }
 
         /** @var Collection $discussions */
         $discussions = Discussion::query()
@@ -63,29 +66,15 @@ class MergeDiscussionHandler
         if ($command->ordering === 'suffix') {
             $discussion = $this->setRelationsAndMergeAppend($discussion, $posts);
         } else {
-            // To avoid integrity constraint violations, we set the number here out of the potential range to begin with
-            $number = $discussion->posts->count() + $posts->count();
-
-            $discussion = $this->setRelationsAndMergeByDate($discussion, $posts, $number);
+            $discussion = $this->setRelationsAndMergeByDate($discussion, $posts);
         }
 
         if ($command->merge) {
-            resolve('db.connection')->transaction(function () use ($discussions, $discussion, $command, $posts) {
+            $this->db->transaction(function () use ($discussions, $discussion, $command, $posts) {
                 try {
-                    // Set the relations using the bumped `number`, so we are sure we won't hit any integrity constraints
-                    $discussion->push();
+                    $this->persistPostPositions($discussion);
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'merging step 1: '.$e->getMessage());
-                }
-
-                if ($command->ordering === 'date') {
-                    try {
-                        // Now we renumber again, this time starting at 0
-                        $discussion = $this->setRelationsAndMergeByDate($discussion, new SupportCollection());
-                        $discussion->push();
-                    } catch (Throwable $e) {
-                        $this->catchError($e, 'merging step 2: '.$e->getMessage());
-                    }
+                    $this->catchError($e, 'merging');
                 }
 
                 $this->events->dispatch(
@@ -139,51 +128,49 @@ class MergeDiscussionHandler
         ]);
     }
 
-    private function fixPostsNumber(Discussion $discussion): void
+    /**
+     * Write the in-memory `discussion_id` / `number` of every moved post with
+     * a fixed number of queries, rather than one UPDATE per post.
+     */
+    private function persistPostPositions(Discussion $discussion): void
     {
-        $posts = $discussion->posts;
-        if ($posts->count() === $discussion->posts()->max('number')) {
+        /** @var Collection<int, Post> $moved */
+        $moved = $discussion->posts->filter(fn ($post) => $post->isDirty(['discussion_id', 'number']));
+
+        if ($moved->isEmpty()) {
             return;
         }
 
-        $number = 0;
+        $chunks = $moved->chunk(static::RENUMBER_CHUNK_SIZE);
 
-        $posts->sortBy('created_at')->each(function ($post, $i) use ($discussion, &$number) {
-            /** @var Post $post */
-            $number++;
-            $post->number = $number;
-            /** @phpstan-ignore-next-line */
-            $discussion->posts[$i] = $post;
-        });
+        // Park every moved post on a NULL number before numbering any of them.
+        // unique(discussion_id, number) admits any number of NULLs on MySQL, MariaDB,
+        // PostgreSQL and SQLite, so the final numbers below cannot collide whatever
+        // order rows are written in.
+        foreach ($chunks as $chunk) {
+            $this->db->table('posts')
+                ->whereIntegerInRaw('id', $chunk->modelKeys())
+                ->update(['discussion_id' => $discussion->id, 'number' => null]);
+        }
 
-        $discussion->setRelation('posts', $discussion->posts->sortBy('number'));
+        foreach ($chunks as $chunk) {
+            // Ids and numbers are integers, so they are inlined: update() cannot bind inside an expression.
+            $cases = $chunk
+                ->map(fn (Post $post) => sprintf('WHEN %d THEN %d', $post->id, $post->number))
+                ->implode(' ');
 
-        resolve('db.connection')->transaction(function () use ($discussion) {
-            try {
-                $discussion->push();
-            } catch (Throwable $e) {
-                $this->catchError($e, 'fixing_posts_number: '.$e->getMessage());
-            }
+            $this->db->table('posts')
+                ->whereIntegerInRaw('id', $chunk->modelKeys())
+                ->update(['number' => $this->db->raw("CASE id $cases END")]);
+        }
 
-            try {
-                /** @var Post $firstPost */
-                $firstPost = $discussion->posts->first();
-
-                $discussion
-                    ->refresh()
-                    ->refreshCommentCount()
-                    ->refreshParticipantCount()
-                    ->refreshLastPost()
-                    ->setFirstPost($firstPost)
-                    ->save();
-            } catch (Throwable $e) {
-                $this->catchError($e, 'fixing_posts_number_meta: '.$e->getMessage());
-            }
-        });
+        $moved->each->syncOriginal();
     }
 
-    private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts, int $number = 0): Discussion
+    private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts): Discussion
     {
+        $number = 0;
+
         $discussion->setRelation(
             'posts',
             $discussion
