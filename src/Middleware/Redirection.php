@@ -46,10 +46,13 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
-            // Identify the requested discussion Id.
-            $id = Arr::get($route, '2.id');
+            // The route parameter is "<id>" or "<id>-<slug>". Compare only the id:
+            // PostgreSQL rejects the raw string against the integer column.
+            if (!preg_match('/^\d+/', (string) Arr::get($route, '2.id'), $matches)) {
+                return $response;
+            }
 
-            $redirect = Redirect::request($id);
+            $redirect = Redirect::request((int) $matches[0]);
 
             if (!$redirect) {
                 return $response;
