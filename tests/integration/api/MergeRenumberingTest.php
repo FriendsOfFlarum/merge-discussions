@@ -383,8 +383,8 @@ class MergeRenumberingTest extends TestCase
     }
 
     /**
-     * @param array<int, string>                         $discussions id => title
-     * @param array<array{0:int,1:int,2:int,3:int,4?:array}> $posts  [id, discussion id, number, minutes after base, extra columns]
+     * @param array<int, string>                             $discussions id => title
+     * @param array<array{0:int,1:int,2:int,3:int,4?:array}> $posts       [id, discussion id, number, minutes after base, extra columns]
      */
     private function seed(array $discussions, array $posts): void
     {
