@@ -19,6 +19,9 @@ use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\Access\AbstractPolicy;
 use Flarum\User\User;
+use FoF\MergeDiscussions\Commands\MergeDiscussion;
+use Illuminate\Contracts\Bus\Dispatcher;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
 
@@ -138,6 +141,21 @@ class MergeSourceAccessTest extends TestCase
         $this->assertEqualsCanonicalizing(['101', '201'], $listed);
         $this->assertEqualsCanonicalizing(['101', '201'], $included);
         $this->assertStringNotContainsString('Unapproved words', (string) $response->getBody());
+    }
+
+    /**
+     * The endpoints only reach a target the actor can see, but the command can
+     * be dispatched from anywhere.
+     */
+    #[Test]
+    public function the_merge_command_refuses_a_target_the_actor_cannot_see()
+    {
+        $bus = $this->app()->getContainer()->make(Dispatcher::class);
+        $moderator = User::query()->findOrFail(self::MODERATOR);
+
+        $this->expectException(ModelNotFoundException::class);
+
+        $bus->dispatch(new MergeDiscussion($moderator, 3, [2], 'date'));
     }
 
     /**

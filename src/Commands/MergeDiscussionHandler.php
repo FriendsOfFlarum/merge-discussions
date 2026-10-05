@@ -43,7 +43,7 @@ class MergeDiscussionHandler
 
     public function handle(MergeDiscussion $command): Discussion
     {
-        $discussion = $this->discussions->findOrFail($command->discussionId);
+        $discussion = $this->discussions->findOrFail($command->discussionId, $command->actor);
 
         $command->actor->assertCan('merge', $discussion);
 
