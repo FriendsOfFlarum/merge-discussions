@@ -12,8 +12,9 @@
 namespace FoF\MergeDiscussions\Middleware;
 
 use FastRoute\Dispatcher\GroupCountBased;
+use Flarum\Http\RequestUtil;
 use Flarum\Http\RouteCollection;
-use FoF\MergeDiscussions\Models\Redirection as Redirect;
+use FoF\MergeDiscussions\Redirects\RedirectResolver;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response;
 use Psr\Http\Message\ResponseInterface;
@@ -23,6 +24,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class Redirection implements MiddlewareInterface
 {
+    public function __construct(protected RedirectResolver $redirects)
+    {
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
@@ -46,28 +51,20 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
-            // The route parameter is "<id>" or "<id>-<slug>". Compare only the id:
-            // PostgreSQL rejects the raw string against the integer column.
-            if (!preg_match('/^\d+/', (string) Arr::get($route, '2.id'), $matches)) {
-                return $response;
-            }
-
-            $redirect = Redirect::request((int) $matches[0]);
+            $redirect = $this->redirects->resolve(
+                (string) Arr::get($route, '2.id'),
+                Arr::get($route, '2.near'),
+                RequestUtil::getActor($request)
+            );
 
             if (!$redirect) {
                 return $response;
             }
 
-            // Retrieve original URI.
-            // Patch this URI with the new discussion to forward to.
-            $uri = $request
-                ->getUri()
-                ->withPath($routes->getPath('discussion', ['id' => $redirect->to_discussion_id]));
-
             // Send a redirect response to the client with the predefined http code.
             return new Response\RedirectResponse(
-                $uri,
-                $redirect->http_code
+                $redirect->url,
+                $redirect->status
             );
         }
 
