@@ -17,6 +17,7 @@ use Flarum\Http\RequestUtil;
 use Flarum\Http\RouteCollection;
 use Flarum\Http\SlugManager;
 use Flarum\Http\UrlGenerator;
+use FoF\MergeDiscussions\Models\MergedPost;
 use FoF\MergeDiscussions\Models\Redirection as Redirect;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response;
@@ -66,19 +67,14 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
-            $redirect = Redirect::request((int) $matches[0]);
+            $id = (int) $matches[0];
+            $redirect = Redirect::request($id);
 
             if (!$redirect) {
                 return $response;
             }
 
-            // The target may have been merged away since. Follow the chain to the
-            // discussion that still exists, so the old URL takes one hop.
-            $targetId = $redirect->to_discussion_id;
-
-            for ($hops = 0; $hops < self::MAX_HOPS && ($next = Redirect::request($targetId)); $hops++) {
-                $targetId = $next->to_discussion_id;
-            }
+            [$targetId, $near] = $this->locate($id, $redirect, Arr::get($route, '2.near'));
 
             // Only redirect to a discussion the visitor can see: the canonical URL
             // carries its title.
@@ -90,9 +86,13 @@ class Redirection implements MiddlewareInterface
 
             // Go straight to the target's canonical URL. The request path has
             // already lost the install's base path, so it cannot be reused.
-            $location = $this->url->to('forum')->route('discussion', [
-                'id' => $this->slugManager->forResource(Discussion::class)->toSlug($target),
-            ]);
+            $parameters = ['id' => $this->slugManager->forResource(Discussion::class)->toSlug($target)];
+
+            if ($near !== null) {
+                $parameters['near'] = $near;
+            }
+
+            $location = $this->url->to('forum')->route('discussion', $parameters);
 
             // Send a redirect response to the client with the predefined http code.
             return new Response\RedirectResponse(
@@ -102,6 +102,33 @@ class Redirection implements MiddlewareInterface
         }
 
         return $response;
+    }
+
+    /**
+     * Where a merged-away discussion, or the post linked to in it, is now.
+     *
+     * @return array{int, int|null} the discussion, and the post number within it to link to
+     */
+    protected function locate(int $id, Redirect $redirect, mixed $near): array
+    {
+        // A link to one post follows that post, wherever it has been moved since.
+        if (is_string($near) && preg_match('/^\d+$/', $near)) {
+            $post = MergedPost::at($id, (int) $near)?->post;
+
+            if ($post) {
+                return [$post->discussion_id, $post->number];
+            }
+        }
+
+        // The target may have been merged away since. Follow the chain to the
+        // discussion that still exists, so the old URL takes one hop.
+        $targetId = $redirect->to_discussion_id;
+
+        for ($hops = 0; $hops < self::MAX_HOPS && ($next = Redirect::request($targetId)); $hops++) {
+            $targetId = $next->to_discussion_id;
+        }
+
+        return [$targetId, null];
     }
 
     protected function getDispatcher(RouteCollection $routes): GroupCountBased

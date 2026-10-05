@@ -11,6 +11,7 @@
 
 namespace FoF\MergeDiscussions\Commands;
 
+use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Foundation\ValidationException;
@@ -29,8 +30,8 @@ use Throwable;
 class MergeDiscussionHandler
 {
     /**
-     * Posts written per UPDATE statement. Keeps each statement a bounded size
-     * however long the merged discussion is.
+     * Posts written per statement. Keeps each statement a bounded size however
+     * long the merged discussion is.
      */
     protected const RENUMBER_CHUNK_SIZE = 500;
 
@@ -164,7 +165,33 @@ class MergeDiscussionHandler
                 ->update(['number' => $this->db->raw("CASE id $cases END")]);
         }
 
+        $this->recordWhereMovedPostsCameFrom($discussion, $moved);
+
         $moved->each->syncOriginal();
+    }
+
+    /**
+     * Record the old discussion and number of each post taken from another
+     * discussion, so links to it can follow it once that discussion is gone.
+     *
+     * @param Collection<int, Post> $moved not yet synced, so getOriginal() is the old position
+     */
+    private function recordWhereMovedPostsCameFrom(Discussion $discussion, Collection $moved): void
+    {
+        $now = Carbon::now();
+
+        $rows = $moved
+            ->filter(fn (Post $post) => (int) $post->getOriginal('discussion_id') !== $discussion->id && $post->getOriginal('number') !== null)
+            ->map(fn (Post $post) => [
+                'post_id'            => $post->id,
+                'from_discussion_id' => $post->getOriginal('discussion_id'),
+                'from_number'        => $post->getOriginal('number'),
+                'created_at'         => $now,
+            ]);
+
+        foreach ($rows->chunk(static::RENUMBER_CHUNK_SIZE) as $chunk) {
+            $this->db->table('fof_merged_posts')->insert($chunk->values()->all());
+        }
     }
 
     private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts): Discussion
