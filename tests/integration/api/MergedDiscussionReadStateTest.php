@@ -103,6 +103,57 @@ class MergedDiscussionReadStateTest extends TestCase
         $this->assertSame(3, $this->unreadCount(self::READER, 1));
     }
 
+    public static function newestReplyRemovals(): array
+    {
+        return [
+            'hidden'  => ['hide'],
+            'deleted' => ['delete'],
+        ];
+    }
+
+    /**
+     * Removing the newest reply makes core recompute the last post from the
+     * next newest. For a deletion it then pulls readers back to that number,
+     * so the correction has to be in place by the time it does.
+     */
+    #[Test]
+    #[DataProvider('newestReplyRemovals')]
+    public function posts_a_merge_appended_stay_unread_when_the_newest_reply_goes(string $removal)
+    {
+        $this->prepareDatabase([
+            Post::class => [
+                ['id' => 104, 'discussion_id' => 1, 'number' => 3, 'created_at' => $this->day(5), 'user_id' => 1, 'type' => 'comment', 'content' => '<t><p>104</p></t>'],
+            ],
+        ]);
+
+        // Appends the source as #4 and #5, after the newest reply, #3.
+        $this->merge(1, [2], 'suffix');
+
+        // The reader had read the target to its end.
+        $this->read(self::READER, 1, 3);
+
+        $removal === 'hide' ? $this->setHidden(104, true) : $this->delete(104);
+
+        // The appended #4 and #5.
+        $this->assertSame(2, $this->unreadCount(self::READER, 1));
+    }
+
+    /**
+     * Hiding the highest-numbered post is no recount for core when it is not
+     * the newest, but nothing past the highest visible post is left to read.
+     */
+    #[Test]
+    public function hiding_the_highest_numbered_post_a_merge_appended_takes_it_out_of_the_unread_count()
+    {
+        // Appends the source as #3 and #4.
+        $this->merge(1, [2], 'suffix');
+
+        $this->setHidden(202, true);
+
+        // Only the appended #3 is left.
+        $this->assertSame(1, $this->unreadCount(self::READER, 1));
+    }
+
     public static function orderings(): array
     {
         return [
@@ -176,6 +227,13 @@ class MergedDiscussionReadStateTest extends TestCase
         ]));
 
         $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+    }
+
+    private function delete(int $postId): void
+    {
+        $response = $this->send($this->request('DELETE', "/api/posts/$postId", ['authenticatedAs' => 1]));
+
+        $this->assertEquals(204, $response->getStatusCode(), (string) $response->getBody());
     }
 
     /**
