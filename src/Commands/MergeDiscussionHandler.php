@@ -25,6 +25,7 @@ use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
 use Throwable;
 
@@ -46,9 +47,19 @@ class MergeDiscussionHandler
 
         $command->actor->assertCan('merge', $discussion);
 
+        $ids = array_unique(Arr::wrap($command->ids));
+
         /** @var Collection $discussions */
-        $discussions = Discussion::query()
-            ->findMany($command->ids);
+        $discussions = Discussion::whereVisibleTo($command->actor)
+            ->findMany($ids);
+
+        // A discussion the actor cannot see is refused as if it did not exist,
+        // so the response gives nothing away about it.
+        if ($discussions->count() !== count($ids)) {
+            throw new ValidationException([
+                'merging_discussions' => MergeDiscussionValidator::MISSING_DISCUSSIONS,
+            ]);
+        }
 
         // Load all posts for these discussions, bypassing visibility scopes
         // We need all posts (including hidden ones) for the merge
