@@ -60,6 +60,9 @@ return [
     (new Extend\Middleware('forum'))
         ->insertAfter(InjectActorReference::class, Middleware\Redirection::class),
 
+    (new Extend\Middleware('api'))
+        ->insertAfter(InjectActorReference::class, Middleware\ApiRedirection::class),
+
     (new Extend\Conditional())
         ->whenExtensionEnabled('flarum-audit', fn () => [
             (new \Flarum\Audit\Extend\Audit())
