@@ -54,13 +54,17 @@ class MergedPostLinksTest extends TestCase
             Discussion::class => [
                 ['id' => 1, 'title' => 'Target', 'slug' => 'target', 'user_id' => 2, 'created_at' => $this->at(0), 'first_post_id' => 101, 'comment_count' => 2],
                 ['id' => 2, 'title' => 'Source', 'slug' => 'source', 'user_id' => 2, 'created_at' => $this->at(10), 'first_post_id' => 201, 'comment_count' => 2],
+                ['id' => 3, 'title' => 'Final', 'slug' => 'final', 'user_id' => 2, 'created_at' => $this->at(5), 'first_post_id' => 301, 'comment_count' => 1],
             ],
-            // A date merge interleaves these as 101 #1, 201 #2, 102 #3, 202 #4.
+            // A date merge of 2 into 1 interleaves these as 101 #1, 201 #2, 102 #3,
+            // 202 #4. Merging 1 into 3 after that gives 101 #1, 301 #2, 201 #3,
+            // 102 #4, 202 #5, then the first merge's notice post.
             Post::class => [
                 ['id' => 101, 'discussion_id' => 1, 'number' => 1, 'created_at' => $this->at(0), 'user_id' => 2, 'type' => 'comment', 'content' => '<t><p>101</p></t>'],
                 ['id' => 102, 'discussion_id' => 1, 'number' => 2, 'created_at' => $this->at(20), 'user_id' => 2, 'type' => 'comment', 'content' => '<t><p>102</p></t>'],
                 ['id' => 201, 'discussion_id' => 2, 'number' => 1, 'created_at' => $this->at(10), 'user_id' => 2, 'type' => 'comment', 'content' => '<t><p>201</p></t>'],
                 ['id' => 202, 'discussion_id' => 2, 'number' => 2, 'created_at' => $this->at(30), 'user_id' => 2, 'type' => 'comment', 'content' => '<t><p>202</p></t>'],
+                ['id' => 301, 'discussion_id' => 3, 'number' => 1, 'created_at' => $this->at(5), 'user_id' => 2, 'type' => 'comment', 'content' => '<t><p>301</p></t>'],
             ],
         ]);
     }
@@ -84,6 +88,44 @@ class MergedPostLinksTest extends TestCase
 
         $this->assertEquals(301, $response->getStatusCode());
         $this->assertEquals($newLink, $response->getHeaderLine('Location'));
+    }
+
+    public static function twiceMovedPostLinks(): array
+    {
+        return [
+            'link from before both merges'  => ['/d/2-source/2'],
+            'link from between the merges' => ['/d/1-target/4'],
+        ];
+    }
+
+    /**
+     * The post is looked up where it is now, not through the discussions it
+     * passed through, so every old link to it takes a single hop.
+     */
+    #[Test]
+    #[DataProvider('twiceMovedPostLinks')]
+    public function link_to_a_post_merged_twice_goes_to_its_final_position_in_one_hop(string $oldLink)
+    {
+        $this->merge(1, [2], 'date');
+        $this->merge(3, [1], 'date');
+
+        $response = $this->get($oldLink);
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/3-final/5', $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function link_to_a_merged_post_deleted_since_goes_to_the_discussion_it_was_merged_into()
+    {
+        $this->merge(1, [2], 'date');
+
+        Post::query()->findOrFail(202)->delete();
+
+        $response = $this->get('/d/2-source/2');
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
     }
 
     private function at(int $minutes): Carbon
