@@ -27,6 +27,12 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class Redirection implements MiddlewareInterface
 {
+    /**
+     * Merges a chain is followed through. Merged-away discussions are deleted,
+     * so a chain cannot loop; this only bounds a corrupted table.
+     */
+    protected const MAX_HOPS = 10;
+
     public function __construct(protected UrlGenerator $url, protected SlugManager $slugManager)
     {
     }
@@ -66,9 +72,17 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
+            // The target may have been merged away since. Follow the chain to the
+            // discussion that still exists, so the old URL takes one hop.
+            $targetId = $redirect->to_discussion_id;
+
+            for ($hops = 0; $hops < self::MAX_HOPS && ($next = Redirect::request($targetId)); $hops++) {
+                $targetId = $next->to_discussion_id;
+            }
+
             // Only redirect to a discussion the visitor can see: the canonical URL
             // carries its title.
-            $target = Discussion::whereVisibleTo(RequestUtil::getActor($request))->find($redirect->to_discussion_id);
+            $target = Discussion::whereVisibleTo(RequestUtil::getActor($request))->find($targetId);
 
             if (!$target) {
                 return $response;

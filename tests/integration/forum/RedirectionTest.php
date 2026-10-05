@@ -55,11 +55,13 @@ class RedirectionTest extends TestCase
                 ['id' => 4, 'discussion_id' => 4, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Private</p></t>'],
             ],
             // Discussions 2 and 5 were merged into 1, and 6 into the hidden 3.
-            // None of them exist any more.
+            // 8 was merged into 9, and 9 later into 1. None of them exist any more.
             self::REDIRECTIONS => [
                 ['id' => 1, 'request_discussion_id' => 2, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
                 ['id' => 2, 'request_discussion_id' => 5, 'to_discussion_id' => 1, 'http_code' => 302, 'created_at' => $date],
                 ['id' => 3, 'request_discussion_id' => 6, 'to_discussion_id' => 3, 'http_code' => 301, 'created_at' => $date],
+                ['id' => 4, 'request_discussion_id' => 8, 'to_discussion_id' => 9, 'http_code' => 301, 'created_at' => $date],
+                ['id' => 5, 'request_discussion_id' => 9, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
             ],
         ]);
     }
@@ -112,6 +114,19 @@ class RedirectionTest extends TestCase
         $response = $this->get('/d/5-old-title');
 
         $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
+    }
+
+    /**
+     * A target merged away in turn would otherwise cost the old URL a second
+     * hop, or a 404 once the intermediate discussion is gone.
+     */
+    #[Test]
+    public function discussion_merged_into_one_merged_away_since_redirects_in_one_hop()
+    {
+        $response = $this->get('/d/8-first-title');
+
+        $this->assertEquals(301, $response->getStatusCode());
         $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
     }
 
@@ -196,8 +211,14 @@ class RedirectionTest extends TestCase
 
         $lookups = $this->redirectLookups();
 
-        $this->assertCount(1, $lookups);
+        // The requested id comes first; following a merge chain adds lookups
+        // for its targets, which must be integers too.
+        $this->assertNotEmpty($lookups);
         $this->assertSame([$expectedId], $lookups[0]['bindings']);
+
+        foreach ($lookups as $lookup) {
+            $this->assertContainsOnlyInt($lookup['bindings']);
+        }
     }
 
     #[Test]
