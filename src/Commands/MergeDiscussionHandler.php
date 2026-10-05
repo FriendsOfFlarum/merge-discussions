@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Commands;
 use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
+use Flarum\Discussion\Event\Deleting as DiscussionDeleting;
 use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
 use Flarum\User\UserRepository;
@@ -101,6 +102,10 @@ class MergeDiscussionHandler
                     foreach ($discussions as $d) {
                         /** @var Discussion $d */
                         Redirection::build($d, $discussion);
+
+                        // Announce it as core's delete does, so extensions clean up
+                        // what they keep for the discussion.
+                        $this->events->dispatch(new DiscussionDeleting($d, $command->actor, []));
 
                         $d->delete();
                     }
