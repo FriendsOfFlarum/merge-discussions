@@ -81,7 +81,9 @@ class RedirectResolver
     protected function locate(int $id, Redirection $redirect, mixed $near): array
     {
         // A link to one post follows that post, wherever it has been moved since.
-        if (is_string($near) && preg_match('/^\d+$/', $near)) {
+        // Up to nine digits always fits the 4-byte column. No post is numbered
+        // past that, and PostgreSQL rejects comparing a larger value with it.
+        if (is_string($near) && preg_match('/^\d{1,9}$/', $near)) {
             $post = MergedPost::at($id, (int) $near)?->post;
 
             if ($post) {

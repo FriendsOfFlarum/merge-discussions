@@ -221,6 +221,37 @@ class RedirectionTest extends TestCase
         }
     }
 
+    public static function oversizedPostNumbers(): array
+    {
+        return [
+            'past a 4-byte integer' => ['/d/2-old-title/2147483648'],
+            'past a 64-bit integer' => ['/d/2-old-title/99999999999999999999'],
+        ];
+    }
+
+    /**
+     * No post has such a number, and PostgreSQL rejects comparing one against
+     * the 4-byte column, so it must not reach the post lookup at all; MySQL
+     * compares it without complaint, hence the bound values are checked too.
+     */
+    #[Test]
+    #[DataProvider('oversizedPostNumbers')]
+    public function oversized_post_number_falls_back_to_the_discussion(string $path)
+    {
+        $this->database()->enableQueryLog();
+
+        $response = $this->get($path);
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
+
+        foreach ($this->queriesOn('fof_merged_posts') as $query) {
+            foreach ($query['bindings'] as $binding) {
+                $this->assertLessThanOrEqual(2147483647, $binding);
+            }
+        }
+    }
+
     #[Test]
     public function visible_discussion_renders_without_a_redirect_lookup()
     {
@@ -246,9 +277,14 @@ class RedirectionTest extends TestCase
 
     private function redirectLookups(): array
     {
+        return $this->queriesOn(self::REDIRECTIONS);
+    }
+
+    private function queriesOn(string $table): array
+    {
         return array_values(array_filter(
             $this->database()->getQueryLog(),
-            fn (array $query) => str_contains($query['query'], self::REDIRECTIONS)
+            fn (array $query) => str_contains($query['query'], $table)
         ));
     }
 }
