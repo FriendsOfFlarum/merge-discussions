@@ -129,6 +129,23 @@ class MergedPostLinksTest extends TestCase
     }
 
     /**
+     * The canonical URL carries the title of the discussion the post is in now,
+     * so it is only given to someone who can see that discussion.
+     */
+    #[Test]
+    public function link_to_a_merged_post_now_in_a_discussion_the_visitor_cannot_see_stays_a_404()
+    {
+        $this->merge(1, [2], 'date');
+
+        Discussion::query()->whereKey(1)->update(['hidden_at' => Carbon::now(), 'hidden_user_id' => 1]);
+
+        $response = $this->get('/d/2-source/2');
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertSame('', $response->getHeaderLine('Location'));
+    }
+
+    /**
      * MySQL 5.7 hands out the highest id again after a restart, so merging away
      * the newest discussion can leave rows behind for an id a later discussion
      * reuses. The link /d/2/2 can only mean one post: the one merged last.

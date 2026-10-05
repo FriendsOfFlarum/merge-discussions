@@ -79,6 +79,7 @@ class RedirectionTest extends TestCase
             'id and empty slug' => ['/d/2-'],
             'id and near post'  => ['/d/2/5'],
             'slug and near'     => ['/d/2-old-title/5'],
+            'non-numeric near'  => ['/d/2-old-title/abc'],
         ];
     }
 
