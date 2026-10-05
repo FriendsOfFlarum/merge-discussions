@@ -81,6 +81,28 @@ class MergedDiscussionReadStateTest extends TestCase
         $this->assertSame(2, $this->unreadCount(self::READER, 1));
     }
 
+    /**
+     * Restoring a post makes core recompute the last post, from the newest
+     * reply again, which must not drop the appended posts back out.
+     */
+    #[Test]
+    public function posts_a_merge_appended_stay_unread_after_a_post_is_restored()
+    {
+        $this->prepareDatabase([
+            Post::class => [
+                ['id' => 103, 'discussion_id' => 1, 'number' => 3, 'created_at' => $this->day(5), 'user_id' => 1, 'type' => 'comment', 'content' => '<t><p>103</p></t>', 'hidden_at' => $this->day(5), 'hidden_user_id' => 1],
+            ],
+        ]);
+
+        // Appends the source as #4 and #5, after the hidden #3.
+        $this->merge(1, [2], 'suffix');
+
+        $this->setHidden(103, false);
+
+        // The restored #3, and the appended #4 and #5.
+        $this->assertSame(3, $this->unreadCount(self::READER, 1));
+    }
+
     public static function orderings(): array
     {
         return [
@@ -144,6 +166,16 @@ class MergedDiscussionReadStateTest extends TestCase
         ]));
 
         $this->assertEquals(201, $response->getStatusCode(), (string) $response->getBody());
+    }
+
+    private function setHidden(int $postId, bool $hidden): void
+    {
+        $response = $this->send($this->request('PATCH', "/api/posts/$postId", [
+            'authenticatedAs' => 1,
+            'json'            => ['data' => ['type' => 'posts', 'id' => (string) $postId, 'attributes' => ['isHidden' => $hidden]]],
+        ]));
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
     }
 
     /**

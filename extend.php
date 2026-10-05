@@ -52,6 +52,9 @@ return [
     (new Extend\View())
         ->namespace('fof-merge-discussions', __DIR__.'/resources/views'),
 
+    (new Extend\ServiceProvider())
+        ->register(Providers\LastPostNumberServiceProvider::class),
+
     (new Extend\Notification())
         ->type(Notification\DiscussionMergedBlueprint::class, ['alert', 'email']),
 
