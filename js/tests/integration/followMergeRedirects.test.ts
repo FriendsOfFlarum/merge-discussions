@@ -76,6 +76,15 @@ describe('a redirect that would leave this forum', () => {
   });
 });
 
+describe('a redirect that is not a URL', () => {
+  it('is handled as a plain not found, still failing the request', async () => {
+    await expect(fail(mergedInto('http://'))).rejects.toBeInstanceOf(RequestError);
+
+    expect(showAlert).toHaveBeenCalled();
+    expect(routeSet).not.toHaveBeenCalled();
+  });
+});
+
 describe('any other not found', () => {
   it('still shows the usual alert, and goes nowhere', async () => {
     await expect(fail(notFound())).rejects.toBeInstanceOf(RequestError);

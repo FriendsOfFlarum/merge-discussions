@@ -44,7 +44,15 @@ function mergeRedirectRoute(error: unknown): string | null {
     return null;
   }
 
-  const target = new URL(redirect, document.baseURI);
+  let target: URL;
+
+  // Throwing here would not reach the caller: override() swallows it, and the
+  // failed request would resolve with nothing instead of rejecting.
+  try {
+    target = new URL(redirect, document.baseURI);
+  } catch {
+    return null;
+  }
 
   // Only ever a page of this forum: the redirect comes from a response, and
   // nothing else is ours to navigate to.
