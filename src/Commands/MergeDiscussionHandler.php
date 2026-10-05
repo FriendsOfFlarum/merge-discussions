@@ -61,6 +61,12 @@ class MergeDiscussionHandler
             ]);
         }
 
+        // Being allowed to merge into the target says nothing about the
+        // discussions merged into it, e.g. when the permission is scoped by tag.
+        foreach ($discussions as $source) {
+            $command->actor->assertCan('merge', $source);
+        }
+
         // Load all posts for these discussions, bypassing visibility scopes
         // We need all posts (including hidden ones) for the merge
         /** @var Collection $posts */
