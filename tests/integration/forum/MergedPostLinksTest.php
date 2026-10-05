@@ -128,6 +128,28 @@ class MergedPostLinksTest extends TestCase
         $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
     }
 
+    /**
+     * MySQL 5.7 hands out the highest id again after a restart, so merging away
+     * the newest discussion can leave rows behind for an id a later discussion
+     * reuses. The link /d/2/2 can only mean one post: the one merged last.
+     */
+    #[Test]
+    public function merging_a_discussion_whose_id_was_used_before_takes_over_its_post_links()
+    {
+        $this->prepareDatabase([
+            'fof_merged_posts' => [
+                ['id' => 1, 'post_id' => 101, 'from_discussion_id' => 2, 'from_number' => 2, 'created_at' => $this->at(-60)],
+            ],
+        ]);
+
+        $this->merge(1, [2], 'date');
+
+        $response = $this->get('/d/2-source/2');
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/1-target/4', $response->getHeaderLine('Location'));
+    }
+
     private function at(int $minutes): Carbon
     {
         return Carbon::parse('2024-01-01 00:00:00')->addMinutes($minutes);

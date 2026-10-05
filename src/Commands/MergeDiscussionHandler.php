@@ -189,6 +189,17 @@ class MergeDiscussionHandler
                 'created_at'         => $now,
             ]);
 
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        // A merged-away discussion's id can come back (MySQL 5.7 reuses the
+        // highest id after a restart). Rows left by the earlier discussion would
+        // collide, and its links now mean this one's posts anyway.
+        $this->db->table('fof_merged_posts')
+            ->whereIntegerInRaw('from_discussion_id', $rows->pluck('from_discussion_id')->unique()->values()->all())
+            ->delete();
+
         foreach ($rows->chunk(static::RENUMBER_CHUNK_SIZE) as $chunk) {
             $this->db->table('fof_merged_posts')->insert($chunk->values()->all());
         }
