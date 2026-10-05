@@ -82,6 +82,22 @@ class MergedDiscussionReadStateTest extends TestCase
     }
 
     /**
+     * Counting the appended posts must not make them the latest activity: the
+     * discussion keeps its place in lists sorted by it.
+     */
+    #[Test]
+    public function appending_older_posts_leaves_the_latest_activity_on_the_newest_reply()
+    {
+        $this->merge(1, [2], 'suffix');
+
+        $response = $this->send($this->request('GET', '/api/discussions/1', ['authenticatedAs' => self::READER]));
+        $attributes = json_decode((string) $response->getBody(), true)['data']['attributes'];
+
+        // When #2, the target's newest reply, was posted.
+        $this->assertSame('2024-01-05T00:00:00+00:00', $attributes['lastPostedAt']);
+    }
+
+    /**
      * Restoring a post makes core recompute the last post, from the newest
      * reply again, which must not drop the appended posts back out.
      */
