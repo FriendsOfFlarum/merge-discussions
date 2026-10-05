@@ -76,6 +76,51 @@ class MergedDiscussionNotFoundTest extends TestCase
         $this->assertSame('http://localhost/d/1-target/4', $this->redirectIn($response));
     }
 
+    #[Test]
+    public function not_found_for_a_merged_discussion_link_says_where_the_discussion_is_now()
+    {
+        $this->merge(1, [2], 'date');
+
+        $response = $this->showDiscussion('2');
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertSame('http://localhost/d/1-target', $this->redirectIn($response));
+    }
+
+    /**
+     * The redirect URL carries the target's title, so it is only given to
+     * someone who can see the target.
+     */
+    #[Test]
+    public function not_found_stays_plain_when_the_target_is_hidden_from_the_visitor()
+    {
+        $this->merge(1, [2], 'date');
+
+        Discussion::query()->whereKey(1)->update(['hidden_at' => Carbon::now(), 'hidden_user_id' => 1]);
+
+        $response = $this->showDiscussion('2-source', ['bySlug' => '1', 'page' => ['near' => '2']]);
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertNull($this->redirectIn($response));
+    }
+
+    #[Test]
+    public function other_not_found_responses_are_left_alone()
+    {
+        $this->database()->enableQueryLog();
+
+        $response = $this->send($this->request('GET', '/api/posts/999999'));
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertNull($this->redirectIn($response));
+
+        $lookups = array_filter(
+            array_column($this->database()->getQueryLog(), 'query'),
+            fn (string $sql) => str_contains($sql, 'fof_merge_discussions_redirections')
+        );
+        $this->assertCount(0, $lookups);
+    }
+
     private function at(int $minutes): Carbon
     {
         return Carbon::parse('2024-01-01 00:00:00')->addMinutes($minutes);
