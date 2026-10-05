@@ -17,6 +17,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -80,6 +81,32 @@ class MergedDiscussionReadStateTest extends TestCase
         $this->assertSame(2, $this->unreadCount(self::READER, 1));
     }
 
+    public static function orderings(): array
+    {
+        return [
+            'by date'  => ['date'],
+            'appended' => ['suffix'],
+        ];
+    }
+
+    /**
+     * What #20 reported: once caught up, a merged discussion stayed read even
+     * as new replies moved it up the discussion list.
+     */
+    #[Test]
+    #[DataProvider('orderings')]
+    public function reply_after_a_merge_is_unread_for_someone_who_had_caught_up(string $ordering)
+    {
+        $this->merge(1, [2], $ordering);
+
+        // Caught up: read to the end, the merge notice at #5.
+        $this->read(self::READER, 1, 5);
+
+        $this->reply(1, 1);
+
+        $this->assertSame(1, $this->unreadCount(self::READER, 1));
+    }
+
     private function day(int $day): Carbon
     {
         return Carbon::parse('2024-01-01 00:00:00')->addDays($day);
@@ -93,6 +120,30 @@ class MergedDiscussionReadStateTest extends TestCase
         ]));
 
         $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+    }
+
+    private function read(int $userId, int $discussionId, int $number): void
+    {
+        $response = $this->send($this->request('PATCH', "/api/discussions/$discussionId", [
+            'authenticatedAs' => $userId,
+            'json'            => ['data' => ['type' => 'discussions', 'id' => (string) $discussionId, 'attributes' => ['lastReadPostNumber' => $number]]],
+        ]));
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+    }
+
+    private function reply(int $discussionId, int $userId): void
+    {
+        $response = $this->send($this->request('POST', '/api/posts', [
+            'authenticatedAs' => $userId,
+            'json'            => ['data' => [
+                'type'          => 'posts',
+                'attributes'    => ['content' => 'A new reply'],
+                'relationships' => ['discussion' => ['data' => ['type' => 'discussions', 'id' => (string) $discussionId]]],
+            ]],
+        ]));
+
+        $this->assertEquals(201, $response->getStatusCode(), (string) $response->getBody());
     }
 
     /**
