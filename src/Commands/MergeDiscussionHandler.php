@@ -90,8 +90,14 @@ class MergeDiscussionHandler
                         ->refreshCommentCount()
                         ->refreshParticipantCount()
                         ->refreshLastPost()
-                        ->setFirstPost($firstPost)
-                        ->save();
+                        ->setFirstPost($firstPost);
+
+                    // The last post by date need not be the last by number:
+                    // appending puts older posts after it. Readers' unread count
+                    // runs to last_post_number, so it has to cover every post.
+                    $discussion->last_post_number = max((int) $discussion->last_post_number, (int) $discussion->comments()->max('number'));
+
+                    $discussion->save();
                 } catch (Throwable $e) {
                     $this->catchError($e, 'updating: '.$e->getMessage());
                 }
