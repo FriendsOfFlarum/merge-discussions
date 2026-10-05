@@ -1,4 +1,3 @@
-/// <reference types="mithril" />
 import EventPost from 'flarum/forum/components/EventPost';
 import type { IPostAttrs } from 'flarum/forum/components/Post';
 interface DiscussionMergePostAttrs extends IPostAttrs {
