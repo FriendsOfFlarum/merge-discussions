@@ -48,20 +48,25 @@ class RedirectionTest extends TestCase
                 ['id' => 1, 'title' => 'Target', 'slug' => 'target', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 1, 'comment_count' => 1],
                 ['id' => 3, 'title' => 'Hidden', 'slug' => 'hidden', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 3, 'comment_count' => 1, 'hidden_at' => $date, 'hidden_user_id' => 1],
                 ['id' => 4, 'title' => 'Private', 'slug' => 'private', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 4, 'comment_count' => 1, 'is_private' => true],
+                ['id' => 11, 'title' => 'Earlier target', 'slug' => 'earlier-target', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 11, 'comment_count' => 1],
             ],
             Post::class => [
                 ['id' => 1, 'discussion_id' => 1, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Target</p></t>'],
                 ['id' => 3, 'discussion_id' => 3, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Hidden</p></t>'],
                 ['id' => 4, 'discussion_id' => 4, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Private</p></t>'],
+                ['id' => 11, 'discussion_id' => 11, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Earlier target</p></t>'],
             ],
             // Discussions 2 and 5 were merged into 1, and 6 into the hidden 3.
-            // 8 was merged into 9, and 9 later into 1. None of them exist any more.
+            // 8 was merged into 9, and 9 later into 1. 10 was merged into 11, then
+            // the id was reused and merged into 1. None of them exist any more.
             self::REDIRECTIONS => [
                 ['id' => 1, 'request_discussion_id' => 2, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
                 ['id' => 2, 'request_discussion_id' => 5, 'to_discussion_id' => 1, 'http_code' => 302, 'created_at' => $date],
                 ['id' => 3, 'request_discussion_id' => 6, 'to_discussion_id' => 3, 'http_code' => 301, 'created_at' => $date],
                 ['id' => 4, 'request_discussion_id' => 8, 'to_discussion_id' => 9, 'http_code' => 301, 'created_at' => $date],
                 ['id' => 5, 'request_discussion_id' => 9, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
+                ['id' => 6, 'request_discussion_id' => 10, 'to_discussion_id' => 11, 'http_code' => 301, 'created_at' => $date],
+                ['id' => 7, 'request_discussion_id' => 10, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
             ],
         ]);
     }
@@ -125,6 +130,19 @@ class RedirectionTest extends TestCase
     public function discussion_merged_into_one_merged_away_since_redirects_in_one_hop()
     {
         $response = $this->get('/d/8-first-title');
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
+    }
+
+    /**
+     * MySQL 5.7 hands out the highest id again after a restart, so the same id
+     * can be merged away twice. Its links mean the discussion merged last.
+     */
+    #[Test]
+    public function reused_discussion_id_redirects_to_the_latest_merge_target()
+    {
+        $response = $this->get('/d/10');
 
         $this->assertEquals(301, $response->getStatusCode());
         $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));

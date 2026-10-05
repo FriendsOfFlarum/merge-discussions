@@ -49,6 +49,10 @@ class Redirection extends AbstractModel
     {
         return self::query()
             ->where('request_discussion_id', $id)
+            // An id merged away more than once was reused (MySQL 5.7 hands out
+            // the highest id again after a restart): the latest merge is what
+            // its links mean now.
+            ->latest('id')
             ->first();
     }
 
