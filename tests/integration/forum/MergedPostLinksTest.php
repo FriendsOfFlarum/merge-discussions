@@ -94,7 +94,7 @@ class MergedPostLinksTest extends TestCase
     {
         return [
             'link from before both merges'  => ['/d/2-source/2'],
-            'link from between the merges' => ['/d/1-target/4'],
+            'link from between the merges'  => ['/d/1-target/4'],
         ];
     }
 
