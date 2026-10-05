@@ -60,6 +60,22 @@ describe('a link into a merged-away discussion', () => {
   });
 });
 
+/**
+ * Only this forum's own pages are followed: the redirect comes from a response,
+ * and nothing else is ours to navigate to.
+ */
+describe('a redirect that would leave this forum', () => {
+  it.each([
+    ['another site', 'https://elsewhere.example/d/1-target'],
+    ['a script', 'javascript:alert(1)'],
+  ])('to %s is ignored: the usual alert, and no navigation', async (_, url) => {
+    await expect(fail(mergedInto(url))).rejects.toBeInstanceOf(RequestError);
+
+    expect(showAlert).toHaveBeenCalled();
+    expect(routeSet).not.toHaveBeenCalled();
+  });
+});
+
 describe('any other not found', () => {
   it('still shows the usual alert, and goes nowhere', async () => {
     await expect(fail(notFound())).rejects.toBeInstanceOf(RequestError);
