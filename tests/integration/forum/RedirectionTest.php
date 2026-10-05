@@ -73,6 +73,11 @@ class RedirectionTest extends TestCase
         ];
     }
 
+    /**
+     * One permanent hop to the target's canonical URL, the same URL fof/seo
+     * declares canonical: search engines transfer the old URL's standing to
+     * it, and nothing lands on a second redirect.
+     */
     #[Test]
     #[DataProvider('mergedDiscussionPaths')]
     public function merged_discussion_redirects_to_its_target(string $path)
@@ -80,7 +85,23 @@ class RedirectionTest extends TestCase
         $response = $this->get($path);
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals('/d/1', $response->getHeaderLine('Location'));
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
+    }
+
+    /**
+     * Inside the forum, the request path has already lost the install's base
+     * path, so a Location built from it pointed outside a forum installed in a
+     * subdirectory.
+     */
+    #[Test]
+    public function redirect_stays_inside_a_forum_installed_in_a_subdirectory()
+    {
+        $this->config('url', 'http://localhost/forum');
+
+        $response = $this->get('/forum/d/2-old-title');
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/forum/d/1-target', $response->getHeaderLine('Location'));
     }
 
     #[Test]
@@ -89,7 +110,7 @@ class RedirectionTest extends TestCase
         $response = $this->get('/d/5-old-title');
 
         $this->assertEquals(302, $response->getStatusCode());
-        $this->assertEquals('/d/1', $response->getHeaderLine('Location'));
+        $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
     }
 
     public static function unknownDiscussionPaths(): array

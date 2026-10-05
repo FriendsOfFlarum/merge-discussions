@@ -36,10 +36,10 @@ class MergeTest extends TestCase
                 ['id' => 3, 'username' => 'moderator', 'email' => 'moderator@machine.local', 'password' => '$2y$10$LO59tiT7uggl6Oe23o/O6.utnF6ipngYjvMvaxo1TciKqBttDNKim', 'is_email_confirmed' => true],
             ],
             Discussion::class => [
-                ['id' => 1, 'title' => 'Discussion 1', 'comment_count' => 5, 'user_id' => 1, 'created_at' => Carbon::now()->subDays(5), 'first_post_id' => 1],
-                ['id' => 2, 'title' => 'Discussion 2', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(4), 'first_post_id' => 2],
-                ['id' => 3, 'title' => 'Discussion 3', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(3), 'first_post_id' => 3],
-                ['id' => 4, 'title' => 'Discussion 4', 'comment_count' => 5, 'user_id' => 3, 'created_at' => Carbon::now()->subDays(2), 'first_post_id' => 4],
+                ['id' => 1, 'title' => 'Discussion 1', 'slug' => 'discussion-1', 'comment_count' => 5, 'user_id' => 1, 'created_at' => Carbon::now()->subDays(5), 'first_post_id' => 1],
+                ['id' => 2, 'title' => 'Discussion 2', 'slug' => 'discussion-2', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(4), 'first_post_id' => 2],
+                ['id' => 3, 'title' => 'Discussion 3', 'slug' => 'discussion-3', 'comment_count' => 5, 'user_id' => 2, 'created_at' => Carbon::now()->subDays(3), 'first_post_id' => 3],
+                ['id' => 4, 'title' => 'Discussion 4', 'slug' => 'discussion-4', 'comment_count' => 5, 'user_id' => 3, 'created_at' => Carbon::now()->subDays(2), 'first_post_id' => 4],
             ],
             Post::class => [
                 // Existing first posts for each discussion, spaced 4 hours apart
@@ -270,7 +270,7 @@ class MergeTest extends TestCase
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals("/d/$to", $response->getHeader('Location')[0]);
+        $this->assertEquals("http://localhost/d/$to-discussion-$to", $response->getHeaderLine('Location'));
     }
 
     #[Test]
@@ -355,7 +355,7 @@ class MergeTest extends TestCase
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals("/d/$to", $response->getHeader('Location')[0]);
+        $this->assertEquals("http://localhost/d/$to-discussion-$to", $response->getHeaderLine('Location'));
     }
 
     #[Test]
@@ -458,13 +458,13 @@ class MergeTest extends TestCase
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals('/d/1', $response->getHeader('Location')[0]);
+        $this->assertEquals('http://localhost/d/1-discussion-1', $response->getHeaderLine('Location'));
 
         $response = $this->send(
             $this->request('GET', '/d/3', [])
         );
 
         $this->assertEquals(301, $response->getStatusCode());
-        $this->assertEquals('/d/1', $response->getHeader('Location')[0]);
+        $this->assertEquals('http://localhost/d/1-discussion-1', $response->getHeaderLine('Location'));
     }
 }

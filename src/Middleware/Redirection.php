@@ -12,7 +12,10 @@
 namespace FoF\MergeDiscussions\Middleware;
 
 use FastRoute\Dispatcher\GroupCountBased;
+use Flarum\Discussion\Discussion;
 use Flarum\Http\RouteCollection;
+use Flarum\Http\SlugManager;
+use Flarum\Http\UrlGenerator;
 use FoF\MergeDiscussions\Models\Redirection as Redirect;
 use Illuminate\Support\Arr;
 use Laminas\Diactoros\Response;
@@ -23,6 +26,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class Redirection implements MiddlewareInterface
 {
+    public function __construct(protected UrlGenerator $url, protected SlugManager $slugManager)
+    {
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
@@ -58,15 +65,21 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
-            // Retrieve original URI.
-            // Patch this URI with the new discussion to forward to.
-            $uri = $request
-                ->getUri()
-                ->withPath($routes->getPath('discussion', ['id' => $redirect->to_discussion_id]));
+            $target = Discussion::find($redirect->to_discussion_id);
+
+            if (!$target) {
+                return $response;
+            }
+
+            // Go straight to the target's canonical URL. The request path has
+            // already lost the install's base path, so it cannot be reused.
+            $location = $this->url->to('forum')->route('discussion', [
+                'id' => $this->slugManager->forResource(Discussion::class)->toSlug($target),
+            ]);
 
             // Send a redirect response to the client with the predefined http code.
             return new Response\RedirectResponse(
-                $uri,
+                $location,
                 $redirect->http_code
             );
         }
