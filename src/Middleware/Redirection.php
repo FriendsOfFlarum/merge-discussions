@@ -13,6 +13,7 @@ namespace FoF\MergeDiscussions\Middleware;
 
 use FastRoute\Dispatcher\GroupCountBased;
 use Flarum\Discussion\Discussion;
+use Flarum\Http\RequestUtil;
 use Flarum\Http\RouteCollection;
 use Flarum\Http\SlugManager;
 use Flarum\Http\UrlGenerator;
@@ -65,7 +66,9 @@ class Redirection implements MiddlewareInterface
                 return $response;
             }
 
-            $target = Discussion::find($redirect->to_discussion_id);
+            // Only redirect to a discussion the visitor can see: the canonical URL
+            // carries its title.
+            $target = Discussion::whereVisibleTo(RequestUtil::getActor($request))->find($redirect->to_discussion_id);
 
             if (!$target) {
                 return $response;

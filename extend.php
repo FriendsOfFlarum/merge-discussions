@@ -15,7 +15,7 @@ use Flarum\Api\Resource\DiscussionResource;
 use Flarum\Api\Schema;
 use Flarum\Audit\AuditLogger;
 use Flarum\Extend;
-use Flarum\Http\Middleware\HandleErrors;
+use Flarum\Http\Middleware\InjectActorReference;
 use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Posts\DiscussionMergePost;
 
@@ -55,8 +55,10 @@ return [
     (new Extend\Notification())
         ->type(Notification\DiscussionMergedBlueprint::class, ['alert', 'email']),
 
+    // Straight after InjectActorReference, to know who is asking, and so still
+    // outside the error handler, to see the 404 it renders.
     (new Extend\Middleware('forum'))
-        ->insertBefore(HandleErrors::class, Middleware\Redirection::class),
+        ->insertAfter(InjectActorReference::class, Middleware\Redirection::class),
 
     (new Extend\Conditional())
         ->whenExtensionEnabled('flarum-audit', fn () => [

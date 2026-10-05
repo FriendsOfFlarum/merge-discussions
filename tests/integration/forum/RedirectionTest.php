@@ -54,10 +54,12 @@ class RedirectionTest extends TestCase
                 ['id' => 3, 'discussion_id' => 3, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Hidden</p></t>'],
                 ['id' => 4, 'discussion_id' => 4, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Private</p></t>'],
             ],
-            // Discussions 2 and 5 were merged into 1 and no longer exist.
+            // Discussions 2 and 5 were merged into 1, and 6 into the hidden 3.
+            // None of them exist any more.
             self::REDIRECTIONS => [
                 ['id' => 1, 'request_discussion_id' => 2, 'to_discussion_id' => 1, 'http_code' => 301, 'created_at' => $date],
                 ['id' => 2, 'request_discussion_id' => 5, 'to_discussion_id' => 1, 'http_code' => 302, 'created_at' => $date],
+                ['id' => 3, 'request_discussion_id' => 6, 'to_discussion_id' => 3, 'http_code' => 301, 'created_at' => $date],
             ],
         ]);
     }
@@ -111,6 +113,29 @@ class RedirectionTest extends TestCase
 
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('http://localhost/d/1-target', $response->getHeaderLine('Location'));
+    }
+
+    /**
+     * The canonical URL carries the target's title, so redirecting someone who
+     * cannot see the target would leak it, and send search engines to a page
+     * they cannot read. They get the 404 they would have had anyway.
+     */
+    #[Test]
+    public function discussion_merged_into_one_the_visitor_cannot_see_stays_a_404()
+    {
+        $response = $this->get('/d/6-old-title');
+
+        $this->assertEquals(404, $response->getStatusCode());
+        $this->assertSame('', $response->getHeaderLine('Location'));
+    }
+
+    #[Test]
+    public function discussion_merged_into_a_hidden_one_redirects_those_who_can_see_it()
+    {
+        $response = $this->get('/d/6-old-title', 1);
+
+        $this->assertEquals(301, $response->getStatusCode());
+        $this->assertEquals('http://localhost/d/3-hidden', $response->getHeaderLine('Location'));
     }
 
     public static function unknownDiscussionPaths(): array
@@ -193,9 +218,9 @@ class RedirectionTest extends TestCase
         $this->assertCount(0, $this->redirectLookups());
     }
 
-    private function get(string $path): ResponseInterface
+    private function get(string $path, ?int $userId = null): ResponseInterface
     {
-        return $this->send($this->request('GET', $path));
+        return $this->send($this->request('GET', $path, $userId ? ['authenticatedAs' => $userId] : []));
     }
 
     private function redirectLookups(): array
