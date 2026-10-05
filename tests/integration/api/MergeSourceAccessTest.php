@@ -54,6 +54,7 @@ class MergeSourceAccessTest extends TestCase
             ],
             Discussion::class => [
                 ['id' => 1, 'title' => 'Target', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 101, 'comment_count' => 1],
+                ['id' => 2, 'title' => 'Source', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 201, 'comment_count' => 1],
                 // Private: no one sees it without an extension that grants it.
                 ['id' => 3, 'title' => 'Private conversation', 'user_id' => 2, 'created_at' => $date, 'first_post_id' => 301, 'comment_count' => 1, 'is_private' => true],
                 // Visible, but the moderator may not merge it (DenyMergingDiscussionFour).
@@ -61,6 +62,9 @@ class MergeSourceAccessTest extends TestCase
             ],
             Post::class => [
                 ['id' => 101, 'discussion_id' => 1, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Target post</p></t>'],
+                ['id' => 201, 'discussion_id' => 2, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Visible reply</p></t>'],
+                // Private, e.g. awaiting approval: the moderator cannot see it.
+                ['id' => 202, 'discussion_id' => 2, 'number' => 2, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Unapproved words</p></t>', 'is_private' => true],
                 ['id' => 301, 'discussion_id' => 3, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Private words</p></t>'],
                 ['id' => 401, 'discussion_id' => 4, 'number' => 1, 'user_id' => 2, 'created_at' => $date, 'type' => 'comment', 'content' => '<t><p>Elsewhere</p></t>'],
             ],
@@ -107,6 +111,45 @@ class MergeSourceAccessTest extends TestCase
 
         $this->assertEquals(403, $response->getStatusCode());
         $this->assertEquals(4, Post::query()->find(401)->discussion_id);
+    }
+
+    #[Test]
+    public function previewing_a_discussion_the_moderator_may_not_merge_is_refused()
+    {
+        $this->extend((new Extend\Policy())->modelPolicy(Discussion::class, DenyMergingDiscussionFour::class));
+
+        $response = $this->preview(1, [4]);
+
+        $this->assertEquals(403, $response->getStatusCode());
+        $this->assertStringNotContainsString('Elsewhere', (string) $response->getBody());
+    }
+
+    #[Test]
+    public function preview_shows_only_posts_the_moderator_can_see()
+    {
+        $response = $this->preview(1, [2]);
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+
+        $document = json_decode((string) $response->getBody(), true);
+        $listed = array_column($document['data']['relationships']['posts']['data'], 'id');
+        $included = array_column(array_filter($document['included'], fn (array $resource) => $resource['type'] === 'posts'), 'id');
+
+        $this->assertEqualsCanonicalizing(['101', '201'], $listed);
+        $this->assertEqualsCanonicalizing(['101', '201'], $included);
+        $this->assertStringNotContainsString('Unapproved words', (string) $response->getBody());
+    }
+
+    /**
+     * Hiding them from the preview must not lose them: the merged-away
+     * discussion is deleted.
+     */
+    #[Test]
+    public function merge_still_moves_posts_the_moderator_cannot_see()
+    {
+        $this->assertEquals(200, $this->merge(1, [2])->getStatusCode());
+
+        $this->assertEquals(1, Post::query()->find(202)->discussion_id);
     }
 
     private function merge(int $target, array $sources): ResponseInterface
