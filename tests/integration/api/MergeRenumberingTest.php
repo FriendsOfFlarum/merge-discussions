@@ -281,9 +281,10 @@ class MergeRenumberingTest extends TestCase
 
         $this->assertMerged($this->merge(1, [2], 'date'));
 
+        $posts = preg_quote($this->database()->getTablePrefix().'posts', '/');
         $postUpdates = array_values(array_filter(
             array_column($this->database()->getQueryLog(), 'query'),
-            fn (string $sql) => preg_match('/^update\s+\S*posts\S*\s+set\b/i', $sql) === 1
+            fn (string $sql) => preg_match('/^update\s+[`"]?'.$posts.'[`"]?\s+set\b/i', $sql) === 1
         ));
 
         // Per 500-post chunk: one statement to park the posts, one to number them.

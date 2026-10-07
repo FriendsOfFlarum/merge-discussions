@@ -35,8 +35,10 @@ class NotifyParticipantsWhenMerged
             ]);
         }
 
+        // Without the relations the merge loaded, every post among them: the
+        // job keeps loaded relations through serialization and reloads them.
         $this->queue->push(
-            new Jobs\SendNotificationWhenDiscussionIsMerged($event->discussion, $mergedDiscussions, $event->actor)
+            new Jobs\SendNotificationWhenDiscussionIsMerged($event->discussion->withoutRelations(), $mergedDiscussions, $event->actor->withoutRelations())
         );
     }
 }
