@@ -54,6 +54,12 @@ class MergeDiscussionHandler
 
         $ids = array_unique(Arr::wrap($command->ids));
 
+        if (in_array($discussion->id, array_map('intval', $ids), true)) {
+            throw new ValidationException([
+                'merging_discussions' => MergeDiscussionValidator::INTO_ITSELF,
+            ]);
+        }
+
         /** @var Collection $discussions */
         $discussions = Discussion::whereVisibleTo($command->actor)
             ->findMany($ids);
@@ -120,7 +126,7 @@ class MergeDiscussionHandler
                         ->setFirstPost($firstPost)
                         ->save();
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'updating: '.$e->getMessage());
+                    $this->catchError($e, 'updating');
                 }
 
                 try {
@@ -135,7 +141,7 @@ class MergeDiscussionHandler
                         $d->delete();
                     }
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'redirection + deleting: '.$e->getMessage());
+                    $this->catchError($e, 'deleting');
                 }
             });
 
@@ -147,6 +153,11 @@ class MergeDiscussionHandler
         return $discussion;
     }
 
+    /**
+     * Log the failure in full, and tell the client only which step failed.
+     *
+     * @param 'merging'|'updating'|'deleting' $type
+     */
     private function catchError(Throwable $e, string $type): never
     {
         $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");

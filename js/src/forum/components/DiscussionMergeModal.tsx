@@ -357,12 +357,6 @@ export default class DiscussionMergeModal extends FormModal<any> {
    */
   shouldIgnoreResult(discussion: Discussion): boolean {
     const id = discussion.id() || '';
-    console.log(
-      'should ignore',
-      id,
-      this.discussion.id(),
-      this.merging.some((d) => d.id() === id)
-    );
     return id === this.discussion.id() || this.merging.some((d) => d.id() === id);
   }
 }

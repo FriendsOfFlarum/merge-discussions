@@ -17,7 +17,12 @@ function previewResponse(shown: number, total: number) {
   const posts = Array.from({ length: shown }, (_, i) => ({
     type: 'posts',
     id: String(100 + i),
-    attributes: { number: i + 1, createdAt: new Date(Date.UTC(2024, 0, 1, 0, i)).toISOString(), contentType: 'comment', contentHtml: `<p>Post ${i + 1}</p>` },
+    attributes: {
+      number: i + 1,
+      createdAt: new Date(Date.UTC(2024, 0, 1, 0, i)).toISOString(),
+      contentType: 'comment',
+      contentHtml: `<p>Post ${i + 1}</p>`,
+    },
   }));
 
   return {
@@ -33,11 +38,12 @@ function previewResponse(shown: number, total: number) {
 }
 
 /**
- * Mount the modal for real, click Preview, and return its text, and whether
- * the preview rendered, once the (stubbed) preview response is in.
+ * Mount the modal for real, click Preview, and return its text, whether the
+ * preview rendered, and the request it sent, once the (stubbed) preview
+ * response is in.
  */
-async function previewText(response: object): Promise<{ text: string; loaded: boolean }> {
-  jest.spyOn(app, 'request').mockResolvedValue(response as never);
+async function preview(response: object): Promise<{ text: string; loaded: boolean; request: any }> {
+  const request = jest.spyOn(app, 'request').mockResolvedValue(response as never);
 
   app.store.pushPayload({
     data: [
@@ -68,10 +74,18 @@ async function previewText(response: object): Promise<{ text: string; loaded: bo
   m.mount(root, null);
   root.remove();
 
-  return { text, loaded };
+  return { text, loaded, request: request.mock.calls[0][0] };
 }
 
 beforeAll(() => {
+  // jsdom has no ResizeObserver, which core's post stream needs when it is
+  // created; without one, the preview's post stream is only partly set up.
+  globalThis.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+
   bootstrapForum();
   app.boot();
 
@@ -85,13 +99,20 @@ afterEach(() => {
 
 describe('the merge preview', () => {
   it('says how much of the merged discussion it shows, when it is cut short', async () => {
-    expect((await previewText(previewResponse(2, 20000))).text).toContain('Showing the first 2 of 20,000 posts.');
+    expect((await preview(previewResponse(2, 20000))).text).toContain('Showing the first 2 of 20,000 posts.');
   });
 
   it('says nothing more when the whole merged discussion fits', async () => {
-    const { text, loaded } = await previewText(previewResponse(2, 2));
+    const { text, loaded } = await preview(previewResponse(2, 2));
 
     expect(loaded).toBe(true);
     expect(text).not.toContain('Showing the first');
+  });
+
+  it('asks for this discussion merged with the chosen ones', async () => {
+    const { request } = await preview(previewResponse(2, 2));
+
+    expect(request.url).toMatch(/\/discussions\/1\/merge-preview$/);
+    expect(request.params).toEqual({ byIds: '2', byOrdering: 'date' });
   });
 });
