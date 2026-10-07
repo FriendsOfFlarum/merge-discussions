@@ -16,6 +16,7 @@ use Flarum\Discussion\Discussion;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -57,14 +58,23 @@ class MegaThreadMergeTest extends TestCase
         ]);
     }
 
+    public static function orderings(): array
+    {
+        return [
+            'by date'  => ['date'],
+            'appended' => ['suffix'],
+        ];
+    }
+
     #[Test]
-    public function date_merge_of_two_mega_threads_succeeds_and_numbers_every_post()
+    #[DataProvider('orderings')]
+    public function merge_of_two_mega_threads_succeeds_and_numbers_every_post(string $ordering)
     {
         $this->seedInterleavedPosts();
 
         $response = $this->send($this->request('POST', '/api/discussions/1/merge', [
             'authenticatedAs' => self::MODERATOR,
-            'json'            => ['ids' => [2], 'ordering' => 'date'],
+            'json'            => ['ids' => [2], 'ordering' => $ordering],
         ]));
 
         $this->assertEquals(200, $response->getStatusCode(), substr((string) $response->getBody(), 0, 2000));

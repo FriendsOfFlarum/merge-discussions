@@ -348,6 +348,38 @@ class MergeRenumberingTest extends TestCase
         $this->assertEquals(0, $this->database()->table('fof_merge_discussions_redirections')->count());
     }
 
+    /**
+     * Every previewed post belongs to the target: serializing each one must not
+     * fetch it again.
+     */
+    #[Test]
+    public function preview_does_not_look_up_the_discussion_once_per_post()
+    {
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 0],
+            [102, 1, 2, 20],
+            [201, 2, 1, 10],
+            [202, 2, 2, 30],
+        ]);
+
+        $this->database()->enableQueryLog();
+
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/1/merge-preview', ['authenticatedAs' => self::MODERATOR])
+                ->withQueryParams(['byIds' => '2', 'byOrdering' => 'date'])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+
+        $discussions = preg_quote($this->database()->getTablePrefix().'discussions', '/');
+        $lookups = array_filter(
+            array_column($this->database()->getQueryLog(), 'query'),
+            fn (string $sql) => preg_match('/^select \* from [`"]?'.$discussions.'[`"]? where [`"]?'.$discussions.'[`"]?\.[`"]?id[`"]? = \? limit 1$/i', $sql) === 1
+        );
+
+        $this->assertLessThanOrEqual(1, count($lookups), implode("\n", $lookups));
+    }
+
     #[Test]
     public function preview_numbers_posts_from_one_without_writing_anything()
     {

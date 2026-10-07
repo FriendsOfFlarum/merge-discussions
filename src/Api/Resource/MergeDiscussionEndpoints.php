@@ -123,6 +123,9 @@ class MergeDiscussionEndpoints
                     $postSerializer = new \Flarum\Api\Serializer($context);
 
                     foreach ($mergedPosts as $post) {
+                        // Each post belongs to the target now: spare serializing it a lookup.
+                        $post->setRelation('discussion', $discussion);
+
                         $postSerializer->addPrimary($postResource, $post, []);
                     }
 
