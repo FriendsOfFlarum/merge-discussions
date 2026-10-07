@@ -172,6 +172,19 @@ class MegaThreadMergeTest extends TestCase
         foreach (array_chunk($rows, 500) as $chunk) {
             $this->database()->table('posts')->insert($chunk);
         }
+
+        // As the test case does for its own fixtures: PostgreSQL doesn't move
+        // the id sequence past ids inserted by hand, so the next post the
+        // merge creates would reuse one of them.
+        if ($this->database()->getDriverName() === 'pgsql') {
+            $grammar = $this->database()->getSchemaGrammar();
+
+            $this->database()->statement(sprintf(
+                "SELECT setval('%s', (SELECT MAX(id) FROM %s))",
+                $grammar->wrapTable('posts_id_seq'),
+                $grammar->wrapTable('posts')
+            ));
+        }
     }
 
     private function at(int $minutes): Carbon
