@@ -27,6 +27,8 @@ export default class DiscussionMergeModal extends FormModal<any> {
   order!: Stream<string>;
   merging!: Discussion[];
   preview!: any;
+  previewShown!: number;
+  previewTotal!: number;
   loadingPreview!: boolean;
   searchState!: SearchState;
   PostStream!: any;
@@ -169,6 +171,14 @@ export default class DiscussionMergeModal extends FormModal<any> {
             >
               {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
             </Button>
+            {this.preview && this.previewTotal > this.previewShown && (
+              <p className="helpText MergeDiscussions-PreviewNote">
+                {app.translator.trans('fof-merge-discussions.forum.modal.preview_truncated', {
+                  shown: this.previewShown,
+                  total: new Intl.NumberFormat(app.translator.getLocale()).format(this.previewTotal),
+                })}
+              </p>
+            )}
             {this.preview && this.PostStream && (
               <div className="MergeDiscussions-PostStream">
                 <div className="Hero">
@@ -235,6 +245,10 @@ export default class DiscussionMergeModal extends FormModal<any> {
         if (payload.included) payload.included.map(app.store.pushObject.bind(app.store));
 
         let posts = payload.data.relationships.posts.data.map((record: any) => app.store.getById('posts', record.id));
+
+        // The preview holds only the start of the merged discussion.
+        this.previewShown = posts.length;
+        this.previewTotal = payload.meta?.['fof-merge-discussions']?.totalPosts ?? posts.length;
 
         // apply date-sort only if ordering === 'date'
         if (this.order() === 'date') {
