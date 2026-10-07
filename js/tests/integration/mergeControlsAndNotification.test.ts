@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from '@jest/globals';
 import bootstrapForum from '@flarum/jest-config/src/bootstrap/forum';
 import app from 'flarum/forum/app';
 import DiscussionControls from 'flarum/forum/utils/DiscussionControls';
+import type Discussion from 'flarum/common/models/Discussion';
 import m from 'mithril';
 import fs from 'fs';
 import path from 'path';
@@ -24,7 +25,7 @@ beforeAll(() => {
 
   bootstrapForum();
   // As the forum does for each enabled extension, so its extenders apply.
-  app.bootExtensions({ 'fof-merge-discussions': forum });
+  app.bootExtensions({ 'fof-merge-discussions': forum as any });
   app.boot();
 
   const locale = path.resolve(process.cwd(), '../resources/locale/en.yml');
@@ -34,7 +35,7 @@ beforeAll(() => {
 function discussion(id: string, canMerge: boolean) {
   app.store.pushPayload({ data: { type: 'discussions', id, attributes: { title: `Discussion ${id}`, slug: `discussion-${id}`, canMerge } } });
 
-  return app.store.getById('discussions', id)!;
+  return app.store.getById<Discussion>('discussions', id)!;
 }
 
 describe('the discussion controls', () => {
