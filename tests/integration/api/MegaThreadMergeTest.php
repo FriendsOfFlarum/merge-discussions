@@ -102,6 +102,41 @@ class MegaThreadMergeTest extends TestCase
     }
 
     /**
+     * The preview shows how the merged discussion starts, not all of it:
+     * every post would be rendered and sent at once, then rendered again by
+     * the browser.
+     */
+    #[Test]
+    public function preview_of_two_mega_threads_shows_the_first_posts_and_counts_them_all()
+    {
+        $this->seedInterleavedPosts();
+
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/1/merge-preview', ['authenticatedAs' => self::MODERATOR])
+                ->withQueryParams(['byIds' => '2', 'byOrdering' => 'date'])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode(), substr((string) $response->getBody(), 0, 2000));
+
+        $document = json_decode((string) $response->getBody(), true);
+
+        // Interleaved by date: the target's posts 1 to 25, alternating with the source's.
+        $expected = [];
+        for ($i = 1; $i <= 25; $i++) {
+            $expected[] = (string) $i;
+            $expected[] = (string) (self::POSTS + $i);
+        }
+
+        $this->assertSame($expected, array_column($document['data']['relationships']['posts']['data'], 'id'));
+
+        $numbers = array_column(array_column(array_filter($document['included'], fn (array $resource) => $resource['type'] === 'posts'), 'attributes'), 'number');
+        sort($numbers);
+        $this->assertSame(range(1, 50), $numbers);
+
+        $this->assertSame(2 * self::POSTS, $document['meta']['fof-merge-discussions']['totalPosts']);
+    }
+
+    /**
      * Interleaved by date, so a merge by date renumbers every post.
      */
     private function seedInterleavedPosts(): void
