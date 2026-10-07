@@ -14,6 +14,7 @@ namespace FoF\MergeDiscussions\Api\Resource;
 use Flarum\Api\Context;
 use Flarum\Api\Endpoint;
 use Flarum\Discussion\Discussion;
+use Flarum\Post\Post;
 use FoF\MergeDiscussions\Commands\MergeDiscussion;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Contracts\Bus\Dispatcher;
@@ -75,6 +76,20 @@ class MergeDiscussionEndpoints
                     /** @var Discussion */
                     $discussion = $this->bus->dispatch(
                         new MergeDiscussion($actor, $discussion->id, $ids, $ordering, false)
+                    );
+
+                    // The merge moves every post, but the preview is a read: show
+                    // only the posts the actor can see.
+                    $visible = array_flip(
+                        Post::whereVisibleTo($actor)
+                            ->whereIn('discussion_id', array_map('intval', [$discussion->id, ...$ids]))
+                            ->pluck('id')
+                            ->all()
+                    );
+
+                    $discussion->setRelation(
+                        'posts',
+                        $discussion->posts->filter(fn ($post) => isset($visible[$post->getKey()]))->values()
                     );
 
                     return $discussion;
