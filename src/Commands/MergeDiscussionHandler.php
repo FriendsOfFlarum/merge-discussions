@@ -109,7 +109,10 @@ class MergeDiscussionHandler
                     /** @var Post $firstPost */
                     $firstPost = $discussion->posts->first();
 
+                    // refresh() reloads every loaded relation: without this, a second
+                    // copy of every post in the merged discussion.
                     $discussion
+                        ->unsetRelation('posts')
                         ->refresh()
                         ->refreshCommentCount()
                         ->refreshParticipantCount()

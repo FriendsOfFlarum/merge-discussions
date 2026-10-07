@@ -31,6 +31,8 @@ class MegaThreadMergeTest extends TestCase
     /** Posts in each of the two discussions. */
     private const POSTS = 10000;
 
+    private const MEMORY_BUDGET_MB = 100;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -72,6 +74,31 @@ class MegaThreadMergeTest extends TestCase
             ->first();
 
         $this->assertEquals([2 * self::POSTS, 2 * self::POSTS, 1, 2 * self::POSTS], [(int) $numbers->posts, (int) $numbers->distinct_numbers, (int) $numbers->lowest, (int) $numbers->highest]);
+    }
+
+    /**
+     * The merge keeps every post as a model for its events, which costs a few
+     * KB each. Peaking at about 90 MB for these 20,000 posts on MySQL, whose
+     * driver buffers results inside PHP's own memory accounting, the budget
+     * catches a second copy of the posts or a serialized relation graph.
+     */
+    #[Test]
+    public function date_merge_of_two_mega_threads_stays_within_a_memory_budget()
+    {
+        $this->seedInterleavedPosts();
+
+        memory_reset_peak_usage();
+        $before = memory_get_usage();
+
+        $response = $this->send($this->request('POST', '/api/discussions/1/merge', [
+            'authenticatedAs' => self::MODERATOR,
+            'json'            => ['ids' => [2], 'ordering' => 'date'],
+        ]));
+
+        $peak = (memory_get_peak_usage() - $before) / 1048576;
+
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertLessThan(self::MEMORY_BUDGET_MB, $peak, sprintf('Merging %d posts peaked at %.1f MB', 2 * self::POSTS, $peak));
     }
 
     /**
