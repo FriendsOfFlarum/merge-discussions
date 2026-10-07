@@ -17,6 +17,8 @@ class MergeDiscussionValidator extends AbstractValidator
 {
     public const MISSING_DISCUSSIONS = 'One or more of the selected discussions do not exist.';
 
+    public const INTO_ITSELF = 'A discussion cannot be merged into itself.';
+
     protected array $rules = [
         'discussion_id' => [
             'int',
