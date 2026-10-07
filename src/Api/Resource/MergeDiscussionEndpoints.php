@@ -24,6 +24,11 @@ use Psr\Http\Message\ResponseInterface;
 
 class MergeDiscussionEndpoints
 {
+    /**
+     * Posts the merge preview shows, from the start of the merged discussion.
+     */
+    protected const PREVIEW_POSTS = 50;
+
     public function __construct(
         protected Dispatcher $bus,
         protected MergeDiscussionValidator $validator
@@ -98,8 +103,11 @@ class MergeDiscussionEndpoints
                     // Use Flarum's serializer to properly serialize the discussion
                     $serializer = new \Flarum\Api\Serializer($context);
 
-                    // Get the merged posts from the relationship set by the handler
-                    $mergedPosts = $discussion->getRelation('posts');
+                    // The merged posts, in order, from the relationship set by the handler.
+                    // Only the first are rendered and sent: a mega thread's every post
+                    // at once is too much for the server, and again for the browser.
+                    $allPosts = $discussion->getRelation('posts');
+                    $mergedPosts = $allPosts->take(static::PREVIEW_POSTS);
 
                     // Serialize the discussion with posts included
                     $resource = $context->resource(
@@ -115,6 +123,9 @@ class MergeDiscussionEndpoints
                     $postSerializer = new \Flarum\Api\Serializer($context);
 
                     foreach ($mergedPosts as $post) {
+                        // Each post belongs to the target now: spare serializing it a lookup.
+                        $post->setRelation('discussion', $discussion);
+
                         $postSerializer->addPrimary($postResource, $post, []);
                     }
 
@@ -135,6 +146,7 @@ class MergeDiscussionEndpoints
                     return new JsonResponse([
                         'data'     => $primary[0],
                         'included' => $included,
+                        'meta'     => ['fof-merge-discussions' => ['totalPosts' => $allPosts->count()]],
                     ]);
                 }),
 
