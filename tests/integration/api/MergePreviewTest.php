@@ -17,6 +17,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 class MergePreviewTest extends TestCase
@@ -124,5 +125,45 @@ class MergePreviewTest extends TestCase
         // Check that discussion 100 now has all posts
         $discussion = Discussion::find(100);
         $this->assertEquals(3, $discussion->comment_count); // 2 + 1 = 3
+    }
+
+    public static function windowOrderings(): array
+    {
+        // The target's 62 posts sort first both ways, as the source's post is the newest.
+        return [
+            'by date'  => ['date', ['3059', '3060', '1002', '1001']],
+            'appended' => ['suffix', ['3058', '3059', '3060', '1001']],
+        ];
+    }
+
+    /**
+     * The preview sends a window of a long merged discussion. From the top, the
+     * target's own posts would fill it and hide every post being merged in.
+     */
+    #[Test]
+    #[DataProvider('windowOrderings')]
+    public function preview_of_a_long_target_opens_just_before_the_first_post_merged_in(string $ordering, array $expectedIds)
+    {
+        $rows = [];
+        for ($k = 1; $k <= 60; $k++) {
+            $rows[] = ['id' => 3000 + $k, 'user_id' => 1, 'type' => 'comment', 'content' => "<t><p>Target post {$k}</p></t>", 'discussion_id' => 100, 'number' => 2 + $k, 'created_at' => Carbon::now()->subDays(2)->addMinutes($k), 'is_private' => false];
+        }
+        $this->database()->table('posts')->insert($rows);
+
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/100/merge-preview', [
+                'authenticatedAs' => 3,
+            ])->withQueryParams([
+                'byIds'      => '101',
+                'byOrdering' => $ordering,
+            ])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+
+        $document = json_decode((string) $response->getBody(), true);
+
+        $this->assertSame($expectedIds, array_column($document['data']['relationships']['posts']['data'], 'id'));
+        $this->assertSame(['totalPosts' => 63, 'offset' => 59], $document['meta']['fof-merge-discussions']);
     }
 }

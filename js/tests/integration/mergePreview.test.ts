@@ -4,20 +4,26 @@ import app from 'flarum/forum/app';
 import m from 'mithril';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import jsYaml from 'js-yaml';
 import flatten from 'flat';
 import DiscussionMergeModal from '../../src/forum/components/DiscussionMergeModal';
 
 /**
- * The merge preview only shows the start of the merged discussion, as the
+ * The merge preview only shows a window of the merged discussion, as the
  * whole of a mega thread is too much to render. The modal has to say so.
  */
 
-function previewResponse(shown: number, total: number) {
+function previewResponse(shown: number, total: number, offset = 0) {
   const posts = Array.from({ length: shown }, (_, i) => ({
     type: 'posts',
     id: String(100 + i),
-    attributes: { number: i + 1, createdAt: new Date(Date.UTC(2024, 0, 1, 0, i)).toISOString(), contentType: 'comment', contentHtml: `<p>Post ${i + 1}</p>` },
+    attributes: {
+      number: offset + i + 1,
+      createdAt: new Date(Date.UTC(2024, 0, 1, 0, i)).toISOString(),
+      contentType: 'comment',
+      contentHtml: `<p>Post ${offset + i + 1}</p>`,
+    },
   }));
 
   return {
@@ -28,8 +34,19 @@ function previewResponse(shown: number, total: number) {
       relationships: { posts: { data: posts.map(({ type, id }) => ({ type, id })) } },
     },
     included: posts,
-    meta: { 'fof-merge-discussions': { totalPosts: total } },
+    meta: { 'fof-merge-discussions': { totalPosts: total, offset } },
   };
+}
+
+/**
+ * Wait, a macrotask at a time, until the modal shows what the test waits for:
+ * the stubbed request and the lazily imported PostStream both settle later.
+ */
+async function waitFor(condition: () => boolean): Promise<void> {
+  for (let tick = 0; tick < 50 && !condition(); tick++) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    m.redraw.sync();
+  }
 }
 
 /**
@@ -60,8 +77,7 @@ async function previewText(response: object): Promise<{ text: string; loaded: bo
   });
 
   (root.querySelector('.MergeDiscussions-Preview .Button') as HTMLButtonElement).click();
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  m.redraw.sync();
+  await waitFor(() => root.querySelector('.MergeDiscussions-PostStream') !== null);
 
   const text = root.textContent ?? '';
   const loaded = root.querySelector('.MergeDiscussions-PostStream') !== null;
@@ -75,7 +91,7 @@ beforeAll(() => {
   bootstrapForum();
   app.boot();
 
-  const locale = path.resolve(process.cwd(), '../resources/locale/en.yml');
+  const locale = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../resources/locale/en.yml');
   app.translator.addTranslations(flatten(jsYaml.load(fs.readFileSync(locale, 'utf8'))) as Record<string, string>);
 });
 
@@ -84,14 +100,18 @@ afterEach(() => {
 });
 
 describe('the merge preview', () => {
-  it('says how much of the merged discussion it shows, when it is cut short', async () => {
-    expect((await previewText(previewResponse(2, 20000))).text).toContain('Showing the first 2 of 20,000 posts.');
+  it('says which posts of the merged discussion it shows, when it is cut short', async () => {
+    expect((await previewText(previewResponse(2, 20000))).text).toContain('Showing posts 1 to 2 of 20,000.');
+  });
+
+  it('says where the window starts, when it starts further in', async () => {
+    expect((await previewText(previewResponse(2, 20000, 9))).text).toContain('Showing posts 10 to 11 of 20,000.');
   });
 
   it('says nothing more when the whole merged discussion fits', async () => {
     const { text, loaded } = await previewText(previewResponse(2, 2));
 
     expect(loaded).toBe(true);
-    expect(text).not.toContain('Showing the first');
+    expect(text).not.toContain('Showing posts');
   });
 });
