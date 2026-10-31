@@ -98,7 +98,10 @@ class MergeDiscussionHandler
         if ($command->merge) {
             $this->db->transaction(function () use ($discussions, $discussion, $command, $posts) {
                 try {
-                    $this->persistPostPositions($discussion, $discussions->modelKeys());
+                    // Read from the posts table, so before the posts move.
+                    $this->recordWhereMovedPostsCameFrom($discussions->modelKeys());
+
+                    $this->persistPostPositions($discussion);
                 } catch (Throwable $e) {
                     $this->catchError($e, 'merging');
                 }
@@ -164,10 +167,8 @@ class MergeDiscussionHandler
     /**
      * Write the in-memory `discussion_id` / `number` of every moved post with
      * a fixed number of queries, rather than one UPDATE per post.
-     *
-     * @param int[] $mergedIds the discussions being merged into $discussion
      */
-    private function persistPostPositions(Discussion $discussion, array $mergedIds): void
+    private function persistPostPositions(Discussion $discussion): void
     {
         /** @var Collection<int, Post> $moved */
         $moved = $discussion->posts->filter(fn ($post) => $post->isDirty(['discussion_id', 'number']));
@@ -175,8 +176,6 @@ class MergeDiscussionHandler
         if ($moved->isEmpty()) {
             return;
         }
-
-        $this->recordWhereMovedPostsCameFrom($mergedIds);
 
         $chunks = $moved->chunk(static::RENUMBER_CHUNK_SIZE);
 
