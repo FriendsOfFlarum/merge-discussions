@@ -20,6 +20,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use FoF\MergeDiscussions\Models\Redirection;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
@@ -107,7 +108,36 @@ class MergeRefusalsTest extends TestCase
 
         $this->assertEquals(422, $response->getStatusCode());
         $this->assertSame('Failed to delete empty discussions.', $this->error($response)['detail']);
+        $this->assertNothingChanged();
+    }
+
+    #[Test]
+    public function a_failure_while_redirecting_the_merged_discussions_is_reported_as_such()
+    {
+        $this->extend((new Extend\Event())->listen('eloquent.saving: '.Redirection::class, function () {
+            throw new RuntimeException('Internal detail of the failure');
+        }));
+
+        $this->app()->getContainer()->make(LocaleManager::class)
+            ->addTranslations('en', __DIR__.'/../../../resources/locale/en.yml');
+
+        $response = $this->merge(1, [2]);
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertSame('Failed to redirect the merged discussions.', $this->error($response)['detail']);
+        $this->assertNothingChanged();
+    }
+
+    /**
+     * The merge runs in one transaction: a failure part-way leaves no trace.
+     */
+    private function assertNothingChanged(): void
+    {
         $this->assertNotNull(Discussion::find(2));
+        $this->assertSame(2, Post::query()->findOrFail(201)->discussion_id);
+        $this->assertSame([1, 2], Post::query()->where('discussion_id', 1)->orderBy('number')->pluck('number')->all());
+        $this->assertSame(0, $this->database()->table('fof_merged_posts')->count());
+        $this->assertSame(0, $this->database()->table('fof_merge_discussions_redirections')->count());
     }
 
     private function merge(int $target, array $sources): ResponseInterface

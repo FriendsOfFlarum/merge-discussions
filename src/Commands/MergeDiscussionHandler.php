@@ -129,19 +129,23 @@ class MergeDiscussionHandler
                     $this->catchError($e, 'updating');
                 }
 
-                try {
-                    foreach ($discussions as $d) {
-                        /** @var Discussion $d */
+                foreach ($discussions as $d) {
+                    /** @var Discussion $d */
+                    try {
                         Redirection::build($d, $discussion);
+                    } catch (Throwable $e) {
+                        $this->catchError($e, 'redirecting');
+                    }
 
+                    try {
                         // Announce it as core's delete does, so extensions clean up
                         // what they keep for the discussion.
                         $this->events->dispatch(new DiscussionDeleting($d, $command->actor, []));
 
                         $d->delete();
+                    } catch (Throwable $e) {
+                        $this->catchError($e, 'deleting');
                     }
-                } catch (Throwable $e) {
-                    $this->catchError($e, 'deleting');
                 }
             });
 
@@ -156,7 +160,7 @@ class MergeDiscussionHandler
     /**
      * Log the failure in full, and tell the client only which step failed.
      *
-     * @param 'merging'|'updating'|'deleting' $type
+     * @param 'merging'|'updating'|'redirecting'|'deleting' $type
      */
     private function catchError(Throwable $e, string $type): never
     {

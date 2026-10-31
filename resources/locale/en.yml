@@ -43,6 +43,7 @@ fof-merge-discussions:
     error:
       merging_failed: Failed to merge discussions.
       updating_failed: Failed to update discussion details.
+      redirecting_failed: Failed to redirect the merged discussions.
       deleting_failed: Failed to delete empty discussions.
 
   ref:
