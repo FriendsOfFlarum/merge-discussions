@@ -79,6 +79,8 @@ class MergeDiscussionEndpoints
                         ]);
                     }
 
+                    $ids = MergeDiscussionValidator::ids($ids);
+
                     $this->validator->assertValid([
                         'discussion_id'       => $discussion->id,
                         'merging_discussions' => $ids,
@@ -93,7 +95,7 @@ class MergeDiscussionEndpoints
                     // only the posts the actor can see.
                     $visible = array_flip(
                         Post::whereVisibleTo($actor)
-                            ->whereIn('discussion_id', array_map('intval', [$discussion->id, ...$ids]))
+                            ->whereIn('discussion_id', [$discussion->id, ...$ids])
                             ->pluck('id')
                             ->all()
                     );
@@ -174,7 +176,7 @@ class MergeDiscussionEndpoints
 
                     // Try to get from parsed body (raw format) or from JSON:API data structure
                     $body = $context->request->getParsedBody();
-                    $ids = $body['ids'] ?? Arr::get($body, 'data.attributes.ids');
+                    $ids = MergeDiscussionValidator::ids($body['ids'] ?? Arr::get($body, 'data.attributes.ids'));
                     $ordering = $body['ordering'] ?? Arr::get($body, 'data.attributes.ordering', 'date');
 
                     $this->validator->assertValid([

@@ -27,7 +27,6 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Grammars\PostgresGrammar;
 use Illuminate\Events\Dispatcher;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Validation\ValidationException as IlluminateValidationException;
 use Psr\Log\LoggerInterface;
@@ -65,13 +64,16 @@ class MergeDiscussionHandler
 
         $command->actor->assertCan('merge', $discussion);
 
-        $ids = array_unique(Arr::wrap($command->ids));
+        $ids = MergeDiscussionValidator::ids($command->ids);
 
-        if (in_array($discussion->id, array_map('intval', $ids), true)) {
+        // An id that isn't a whole number names no discussion.
+        if (in_array(null, $ids, true)) {
             throw new ValidationException([
-                'merging_discussions' => MergeDiscussionValidator::INTO_ITSELF,
+                'merging_discussions' => MergeDiscussionValidator::MISSING_DISCUSSIONS,
             ]);
         }
+
+        $ids = array_values(array_unique($ids));
 
         /** @var Collection $discussions */
         $discussions = Discussion::whereVisibleTo($command->actor)

@@ -23,6 +23,7 @@ use Flarum\Testing\integration\TestCase;
 use Flarum\User\Exception\PermissionDeniedException;
 use Flarum\User\User;
 use FoF\MergeDiscussions\Models\Redirection;
+use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
@@ -73,6 +74,8 @@ class MergeRefusalsTest extends TestCase
     #[Test]
     public function merging_a_discussion_into_itself_is_refused_before_anything_changes()
     {
+        $this->loadTranslations();
+
         $response = $this->merge(1, [1]);
 
         $this->assertEquals(422, $response->getStatusCode());
@@ -81,6 +84,45 @@ class MergeRefusalsTest extends TestCase
 
         $this->assertSame([1, 2], Post::query()->where('discussion_id', 1)->orderBy('number')->pluck('number')->all());
         $this->assertSame(0, $this->database()->table('fof_merged_posts')->count());
+    }
+
+    #[Test]
+    public function previewing_a_discussion_merged_into_itself_is_refused()
+    {
+        $this->loadTranslations();
+
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/1/merge-preview', ['authenticatedAs' => self::MODERATOR])
+                ->withQueryParams(['byIds' => '1', 'byOrdering' => 'date'])
+        );
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertSame('/data/attributes/merging_discussions', $this->error($response)['source']['pointer']);
+        $this->assertSame('A discussion cannot be merged into itself.', $this->error($response)['detail']);
+    }
+
+    /**
+     * An id that isn't a whole number names no discussion, even one that PHP or
+     * the database would read as a number, such as "1abc" for this discussion.
+     */
+    #[Test]
+    public function an_id_that_is_not_a_number_is_refused_as_missing()
+    {
+        $response = $this->merge(1, ['1abc']);
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertSame(MergeDiscussionValidator::MISSING_DISCUSSIONS, $this->error($response)['detail']);
+        $this->assertNothingChanged();
+    }
+
+    #[Test]
+    public function a_discussion_named_twice_is_merged_once()
+    {
+        $response = $this->merge(1, ['2', '02']);
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+        $this->assertSame(1, Post::query()->findOrFail(201)->discussion_id);
+        $this->assertNull(Discussion::find(2));
     }
 
     #[Test]
