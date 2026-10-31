@@ -53,9 +53,9 @@ class MergeDiscussionValidator extends AbstractValidator
     {
         return array_values(array_map(
             fn (mixed $id) => match (true) {
-                is_int($id) && $id > 0 => $id,
+                is_int($id) && $id > 0                              => $id,
                 is_string($id) && ctype_digit($id) && (int) $id > 0 => (int) $id,
-                default => null,
+                default                                             => null,
             },
             Arr::wrap($ids)
         ));
