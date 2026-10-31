@@ -15,10 +15,12 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\Event\Deleting;
 use Flarum\Extend;
+use Flarum\Foundation\ValidationException;
 use Flarum\Locale\LocaleManager;
 use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
+use Flarum\User\Exception\PermissionDeniedException;
 use Flarum\User\User;
 use FoF\MergeDiscussions\Models\Redirection;
 use PHPUnit\Framework\Attributes\Test;
@@ -101,13 +103,43 @@ class MergeRefusalsTest extends TestCase
             throw new RuntimeException('Internal detail of the failure');
         }));
 
-        $this->app()->getContainer()->make(LocaleManager::class)
-            ->addTranslations('en', __DIR__.'/../../../resources/locale/en.yml');
+        $this->loadTranslations();
 
         $response = $this->merge(1, [2]);
 
         $this->assertEquals(422, $response->getStatusCode());
         $this->assertSame('Failed to delete empty discussions.', $this->error($response)['detail']);
+        $this->assertNothingChanged();
+    }
+
+    /**
+     * Another extension refusing to let a discussion go, with its reason: the
+     * client gets that refusal as it was, not a generic failure.
+     */
+    #[Test]
+    public function a_refusal_while_deleting_the_merged_discussions_reaches_the_client_with_its_reason()
+    {
+        $this->extend((new Extend\Event())->listen(Deleting::class, function () {
+            throw new ValidationException(['discussion' => 'Archived discussions cannot be deleted.']);
+        }));
+
+        $response = $this->merge(1, [2]);
+
+        $this->assertEquals(422, $response->getStatusCode());
+        $this->assertSame('Archived discussions cannot be deleted.', $this->error($response)['detail']);
+        $this->assertNothingChanged();
+    }
+
+    #[Test]
+    public function a_permission_refusal_while_deleting_the_merged_discussions_stays_a_403()
+    {
+        $this->extend((new Extend\Event())->listen(Deleting::class, function () {
+            throw new PermissionDeniedException();
+        }));
+
+        $response = $this->merge(1, [2]);
+
+        $this->assertEquals(403, $response->getStatusCode());
         $this->assertNothingChanged();
     }
 
@@ -118,8 +150,7 @@ class MergeRefusalsTest extends TestCase
             throw new RuntimeException('Internal detail of the failure');
         }));
 
-        $this->app()->getContainer()->make(LocaleManager::class)
-            ->addTranslations('en', __DIR__.'/../../../resources/locale/en.yml');
+        $this->loadTranslations();
 
         $response = $this->merge(1, [2]);
 
@@ -138,6 +169,18 @@ class MergeRefusalsTest extends TestCase
         $this->assertSame([1, 2], Post::query()->where('discussion_id', 1)->orderBy('number')->pluck('number')->all());
         $this->assertSame(0, $this->database()->table('fof_merged_posts')->count());
         $this->assertSame(0, $this->database()->table('fof_merge_discussions_redirections')->count());
+    }
+
+    /**
+     * flarum/testing 2.0 enables extensions before their extenders run, so
+     * Extend\Locales never adds the extension's translations in tests (fixed in
+     * flarum/testing 2.1). Without this the messages come back as raw keys.
+     * Call it after any extend(): it boots the app.
+     */
+    private function loadTranslations(): void
+    {
+        $this->app()->getContainer()->make(LocaleManager::class)
+            ->addTranslations('en', __DIR__.'/../../../resources/locale/en.yml');
     }
 
     private function merge(int $target, array $sources): ResponseInterface

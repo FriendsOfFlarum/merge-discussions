@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Discussion\Event\Deleting as DiscussionDeleting;
+use Flarum\Foundation\KnownError;
 use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
 use Flarum\User\UserRepository;
@@ -28,7 +29,11 @@ use Illuminate\Database\Query\Grammars\PostgresGrammar;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Validation\ValidationException as IlluminateValidationException;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
+use Tobyz\JsonApiServer\Exception\ErrorProvider;
 
 class MergeDiscussionHandler
 {
@@ -43,8 +48,15 @@ class MergeDiscussionHandler
      */
     protected const UNMERGED_POST_TYPES = ['discussionTagged'];
 
-    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator, protected ConnectionInterface $db)
-    {
+    public function __construct(
+        protected UserRepository $users,
+        protected DiscussionRepository $discussions,
+        protected Dispatcher $events,
+        protected MergeDiscussionValidator $validator,
+        protected ConnectionInterface $db,
+        protected TranslatorInterface $translator,
+        protected LoggerInterface $log
+    ) {
     }
 
     public function handle(MergeDiscussion $command): Discussion
@@ -168,19 +180,23 @@ class MergeDiscussionHandler
     }
 
     /**
-     * Log the failure in full, and tell the client only which step failed.
+     * Pass on a refusal the client should see as it is, such as another
+     * extension's validation error or a permission refusal. Log anything else
+     * in full, and tell the client only which step failed.
      *
      * @param 'merging'|'updating'|'redirecting'|'deleting' $type
      */
     private function catchError(Throwable $e, string $type): never
     {
-        $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
+        if ($e instanceof KnownError || $e instanceof ValidationException || $e instanceof IlluminateValidationException || $e instanceof ErrorProvider) {
+            throw $e;
+        }
 
-        resolve('log')->error("[fof/merge-discussions] $msg");
-        resolve('log')->error($e);
+        $this->log->error("[fof/merge-discussions] A merge failed while {$type}.");
+        $this->log->error($e);
 
         throw new ValidationException([
-            'fof/merge-discussions' => $msg,
+            'fof/merge-discussions' => $this->translator->trans("fof-merge-discussions.api.error.{$type}_failed"),
         ]);
     }
 
