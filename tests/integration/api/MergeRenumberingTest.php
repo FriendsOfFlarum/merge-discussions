@@ -18,6 +18,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Events\MergingDiscussions;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
@@ -324,6 +325,31 @@ class MergeRenumberingTest extends TestCase
             [102, 1, 4, false],
         ], self::$seenByListener);
         $this->assertPositions(1, [201, 101, 202, 102]);
+    }
+
+    /**
+     * Listeners after the merge get the merged discussion with its posts, as
+     * when refresh() reloaded them, but without reading them a second time.
+     */
+    #[Test]
+    public function merged_listeners_get_the_merged_discussion_with_its_posts()
+    {
+        $this->extend((new Extend\Event())->listen(DiscussionWasMerged::class, function (DiscussionWasMerged $event) {
+            self::$seenByListener = $event->discussion->relationLoaded('posts')
+                ? $event->discussion->posts->map(fn (Post $post) => [$post->id, $post->number])->values()->all()
+                : ['posts not loaded'];
+        }));
+
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 10],
+            [102, 1, 2, 30],
+            [201, 2, 1, 0],
+            [202, 2, 2, 20],
+        ]);
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $this->assertSame([[201, 1], [101, 2], [202, 3], [102, 4]], self::$seenByListener);
     }
 
     /**

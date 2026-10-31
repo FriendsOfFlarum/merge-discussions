@@ -111,11 +111,14 @@ class MergeDiscussionHandler
                 );
 
                 try {
-                    /** @var Post $firstPost */
-                    $firstPost = $discussion->posts->first();
+                    $mergedPosts = $discussion->posts;
 
-                    // refresh() reloads every loaded relation: without this, a second
-                    // copy of every post in the merged discussion.
+                    /** @var Post $firstPost */
+                    $firstPost = $mergedPosts->first();
+
+                    // refresh() reloads every loaded relation, which would read a
+                    // second copy of every post. The posts are set back afterwards
+                    // from memory, so listeners still get them.
                     $discussion
                         ->unsetRelation('posts')
                         ->refresh()
@@ -124,6 +127,8 @@ class MergeDiscussionHandler
                         ->refreshLastPost()
                         ->setFirstPost($firstPost)
                         ->save();
+
+                    $discussion->setRelation('posts', $mergedPosts);
                 } catch (Throwable $e) {
                     $this->catchError($e, 'updating: '.$e->getMessage());
                 }
