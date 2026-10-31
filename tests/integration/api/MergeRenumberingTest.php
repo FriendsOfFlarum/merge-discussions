@@ -18,6 +18,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Events\MergingDiscussions;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
@@ -324,6 +325,57 @@ class MergeRenumberingTest extends TestCase
             [102, 1, 4, false],
         ], self::$seenByListener);
         $this->assertPositions(1, [201, 101, 202, 102]);
+    }
+
+    /**
+     * Listeners after the merge get the merged discussion with its posts, as
+     * when refresh() reloaded them, but without reading them a second time.
+     */
+    #[Test]
+    public function merged_listeners_get_the_merged_discussion_with_its_posts()
+    {
+        $this->extend((new Extend\Event())->listen(DiscussionWasMerged::class, function (DiscussionWasMerged $event) {
+            self::$seenByListener = $event->discussion->relationLoaded('posts')
+                ? $event->discussion->posts->map(fn (Post $post) => [$post->id, $post->number])->values()->all()
+                : ['posts not loaded'];
+        }));
+
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 10],
+            [102, 1, 2, 30],
+            [201, 2, 1, 0],
+            [202, 2, 2, 20],
+        ]);
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $this->assertSame([[201, 1], [101, 2], [202, 3], [102, 4]], self::$seenByListener);
+    }
+
+    /**
+     * Where a post came from is recorded with the time of the merge, never the
+     * post's own date: in strict mode MySQL refuses a date outside TIMESTAMP's
+     * 1970-2038 range, which an imported post can have.
+     */
+    #[Test]
+    public function a_merged_post_is_recorded_with_the_time_of_the_merge_whatever_its_own_date()
+    {
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 0],
+            [201, 2, 1, 10, ['created_at' => Carbon::parse('1965-06-01 00:00:00')]],
+        ]);
+
+        // Flarum connects with strict mode off, which would store a zero date instead.
+        if (in_array($this->database()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $this->database()->statement("SET SESSION sql_mode = 'STRICT_TRANS_TABLES'");
+        }
+
+        $before = Carbon::now()->subMinute();
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $recordedAt = Carbon::parse($this->database()->table('fof_merged_posts')->where('post_id', 201)->value('created_at'));
+        $this->assertTrue($recordedAt->greaterThan($before), "Recorded at $recordedAt");
     }
 
     #[Test]
