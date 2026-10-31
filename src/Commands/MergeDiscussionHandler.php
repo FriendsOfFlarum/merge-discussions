@@ -84,8 +84,9 @@ class MergeDiscussionHandler
                 return in_array($post->type, static::UNMERGED_POST_TYPES, true);
             });
 
+        // Only the ids: the posts as arrays would render every post's content again.
         $this->validator->assertValid([
-            'posts' => $posts->toArray(),
+            'posts' => $posts->modelKeys(),
         ]);
 
         if ($command->ordering === 'suffix') {
