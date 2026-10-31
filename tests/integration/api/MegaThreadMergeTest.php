@@ -29,8 +29,17 @@ class MegaThreadMergeTest extends TestCase
 
     private const MODERATOR = 3;
 
-    /** Posts in each of the two discussions. */
+    /** Posts in each of the two discussions, for the memory budget. */
     private const POSTS = 10000;
+
+    /**
+     * Posts in each discussion for the checks that don't measure memory:
+     * enough for several renumbering chunks, far quicker to seed and merge.
+     */
+    private const FEW_POSTS = 1200;
+
+    /** Added to the source's post ids, so they don't depend on how many posts are seeded. */
+    private const SOURCE_IDS = 100000;
 
     private const MEMORY_BUDGET_MB = 100;
 
@@ -52,8 +61,8 @@ class MegaThreadMergeTest extends TestCase
                 ['group_id' => 4, 'permission' => 'discussion.merge'],
             ],
             Discussion::class => [
-                ['id' => 1, 'title' => 'Target', 'user_id' => 2, 'created_at' => $this->at(0), 'first_post_id' => 1, 'comment_count' => self::POSTS],
-                ['id' => 2, 'title' => 'Source', 'user_id' => 2, 'created_at' => $this->at(1), 'first_post_id' => self::POSTS + 1, 'comment_count' => self::POSTS],
+                ['id' => 1, 'title' => 'Target', 'user_id' => 2, 'created_at' => $this->at(0), 'first_post_id' => 1],
+                ['id' => 2, 'title' => 'Source', 'user_id' => 2, 'created_at' => $this->at(1), 'first_post_id' => self::SOURCE_IDS + 1],
             ],
         ]);
     }
@@ -68,9 +77,9 @@ class MegaThreadMergeTest extends TestCase
 
     #[Test]
     #[DataProvider('orderings')]
-    public function merge_of_two_mega_threads_succeeds_and_numbers_every_post(string $ordering)
+    public function merge_of_two_long_threads_succeeds_and_numbers_every_post(string $ordering)
     {
-        $this->seedInterleavedPosts();
+        $this->seedInterleavedPosts(self::FEW_POSTS);
 
         $response = $this->send($this->request('POST', '/api/discussions/1/merge', [
             'authenticatedAs' => self::MODERATOR,
@@ -83,7 +92,7 @@ class MegaThreadMergeTest extends TestCase
             ->selectRaw('COUNT(*) AS posts, COUNT(DISTINCT number) AS distinct_numbers, MIN(number) AS lowest, MAX(number) AS highest')
             ->first();
 
-        $this->assertEquals([2 * self::POSTS, 2 * self::POSTS, 1, 2 * self::POSTS], [(int) $numbers->posts, (int) $numbers->distinct_numbers, (int) $numbers->lowest, (int) $numbers->highest]);
+        $this->assertEquals([2 * self::FEW_POSTS, 2 * self::FEW_POSTS, 1, 2 * self::FEW_POSTS], [(int) $numbers->posts, (int) $numbers->distinct_numbers, (int) $numbers->lowest, (int) $numbers->highest]);
     }
 
     /**
@@ -95,7 +104,7 @@ class MegaThreadMergeTest extends TestCase
     #[Test]
     public function date_merge_of_two_mega_threads_stays_within_a_memory_budget()
     {
-        $this->seedInterleavedPosts();
+        $this->seedInterleavedPosts(self::POSTS);
 
         memory_reset_peak_usage();
         $before = memory_get_usage();
@@ -112,14 +121,14 @@ class MegaThreadMergeTest extends TestCase
     }
 
     /**
-     * The preview shows how the merged discussion starts, not all of it:
+     * The preview shows a window of the merged discussion, not all of it:
      * every post would be rendered and sent at once, then rendered again by
-     * the browser.
+     * the browser. Interleaved by date, the first merged-in post is the second.
      */
     #[Test]
-    public function preview_of_two_mega_threads_shows_the_first_posts_and_counts_them_all()
+    public function preview_of_two_long_threads_shows_the_first_posts_and_counts_them_all()
     {
-        $this->seedInterleavedPosts();
+        $this->seedInterleavedPosts(self::FEW_POSTS);
 
         $response = $this->send(
             $this->request('GET', '/api/discussions/1/merge-preview', ['authenticatedAs' => self::MODERATOR])
@@ -134,7 +143,7 @@ class MegaThreadMergeTest extends TestCase
         $expected = [];
         for ($i = 1; $i <= 25; $i++) {
             $expected[] = (string) $i;
-            $expected[] = (string) (self::POSTS + $i);
+            $expected[] = (string) (self::SOURCE_IDS + $i);
         }
 
         $this->assertSame($expected, array_column($document['data']['relationships']['posts']['data'], 'id'));
@@ -143,21 +152,21 @@ class MegaThreadMergeTest extends TestCase
         sort($numbers);
         $this->assertSame(range(1, 50), $numbers);
 
-        $this->assertSame(2 * self::POSTS, $document['meta']['fof-merge-discussions']['totalPosts']);
+        $this->assertSame(['totalPosts' => 2 * self::FEW_POSTS, 'offset' => 0], $document['meta']['fof-merge-discussions']);
     }
 
     /**
      * Interleaved by date, so a merge by date renumbers every post.
      */
-    private function seedInterleavedPosts(): void
+    private function seedInterleavedPosts(int $posts): void
     {
         $body = '<t><p>'.str_repeat('A reply long enough to look like a real one. ', 22).'</p></t>';
         $rows = [];
 
-        for ($i = 1; $i <= self::POSTS; $i++) {
+        for ($i = 1; $i <= $posts; $i++) {
             foreach ([1, 2] as $discussion) {
                 $rows[] = [
-                    'id'            => ($discussion - 1) * self::POSTS + $i,
+                    'id'            => ($discussion === 1 ? 0 : self::SOURCE_IDS) + $i,
                     'discussion_id' => $discussion,
                     'number'        => $i,
                     'user_id'       => 2,
@@ -172,6 +181,8 @@ class MegaThreadMergeTest extends TestCase
         foreach (array_chunk($rows, 500) as $chunk) {
             $this->database()->table('posts')->insert($chunk);
         }
+
+        $this->database()->table('discussions')->whereIn('id', [1, 2])->update(['comment_count' => $posts]);
 
         // As the test case does for its own fixtures: PostgreSQL doesn't move
         // the id sequence past ids inserted by hand, so the next post the
