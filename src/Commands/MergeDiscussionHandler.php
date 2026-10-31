@@ -24,6 +24,7 @@ use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Grammars\PostgresGrammar;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
@@ -209,7 +210,7 @@ class MergeDiscussionHandler
      * Runs before the posts move, copying their positions straight from the
      * posts table: a fixed number of statements however many posts there are.
      *
-     * @param int[] $mergedIds
+     * @param int[] $mergedIds the discussions being merged away
      */
     private function recordWhereMovedPostsCameFrom(array $mergedIds): void
     {
@@ -224,21 +225,24 @@ class MergeDiscussionHandler
             ->whereIntegerInRaw('from_discussion_id', $mergedIds)
             ->delete();
 
-        // The posts' own created_at stands in for the recording time, which is
-        // set just below: a bound value in the select list has no type, and
-        // PostgreSQL will not put text into a timestamp column.
+        $posts = $this->db->table('posts');
+        $grammar = $posts->getGrammar();
+
+        // The recording time is bound in the select list. A bound value there has
+        // no type, and PostgreSQL will not put text into a timestamp column, so it
+        // is cast there. Copying a post's own date instead would fail on MySQL in
+        // strict mode for any post dated outside TIMESTAMP's 1970-2038 range.
+        $recordedAt = $grammar instanceof PostgresGrammar ? 'CAST(? AS TIMESTAMP)' : '?';
+
         $this->db->table('fof_merged_posts')->insertUsing(
             ['post_id', 'from_discussion_id', 'from_number', 'created_at'],
-            $this->db->table('posts')
-                ->select(['id', 'discussion_id', 'number', 'created_at'])
+            $posts
+                ->select(['id', 'discussion_id', 'number'])
+                ->selectRaw($recordedAt, [Carbon::now()->format($grammar->getDateFormat())])
                 ->whereIntegerInRaw('discussion_id', $mergedIds)
                 ->whereNotIn('type', static::UNMERGED_POST_TYPES)
                 ->whereNotNull('number')
         );
-
-        $this->db->table('fof_merged_posts')
-            ->whereIntegerInRaw('from_discussion_id', $mergedIds)
-            ->update(['created_at' => Carbon::now()]);
     }
 
     private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts): Discussion

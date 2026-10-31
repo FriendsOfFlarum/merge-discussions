@@ -326,6 +326,32 @@ class MergeRenumberingTest extends TestCase
         $this->assertPositions(1, [201, 101, 202, 102]);
     }
 
+    /**
+     * Where a post came from is recorded with the time of the merge, never the
+     * post's own date: in strict mode MySQL refuses a date outside TIMESTAMP's
+     * 1970-2038 range, which an imported post can have.
+     */
+    #[Test]
+    public function a_merged_post_is_recorded_with_the_time_of_the_merge_whatever_its_own_date()
+    {
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 0],
+            [201, 2, 1, 10, ['created_at' => Carbon::parse('1965-06-01 00:00:00')]],
+        ]);
+
+        // Flarum connects with strict mode off, which would store a zero date instead.
+        if (in_array($this->database()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $this->database()->statement("SET SESSION sql_mode = 'STRICT_TRANS_TABLES'");
+        }
+
+        $before = Carbon::now()->subMinute();
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $recordedAt = Carbon::parse($this->database()->table('fof_merged_posts')->where('post_id', 201)->value('created_at'));
+        $this->assertTrue($recordedAt->greaterThan($before), "Recorded at $recordedAt");
+    }
+
     #[Test]
     public function a_failure_after_the_writes_rolls_the_whole_merge_back()
     {
