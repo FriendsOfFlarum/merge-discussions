@@ -23,6 +23,8 @@ beforeAll(() => {
 let root: HTMLElement | null = null;
 
 afterEach(() => {
+  jest.useRealTimers();
+
   if (root) {
     m.mount(root, null);
     root.remove();
@@ -66,12 +68,16 @@ function api(response: object = {}) {
 async function search(modal: HTMLElement, query: string): Promise<string[]> {
   const input = modal.querySelector<HTMLInputElement>('.MergeDiscussions-Search input')!;
 
+  // The search waits for typing to pause before it looks anything up. Run that
+  // wait out, however long it is, rather than sleeping past it.
+  jest.useFakeTimers();
+
   input.focus();
   input.value = query;
   input.dispatchEvent(new Event('input'));
 
-  // The search waits for typing to pause before it looks anything up.
-  await new Promise((resolve) => setTimeout(resolve, 300));
+  await jest.runOnlyPendingTimersAsync();
+  jest.useRealTimers();
   m.redraw.sync();
 
   return Array.from(modal.querySelectorAll<HTMLElement>('.DiscussionSearchResult[data-id]'), (result) => result.dataset.id!);
@@ -87,6 +93,17 @@ async function submit(modal: HTMLElement, request: ReturnType<typeof api>): Prom
   return request.mock.calls.map(([options]) => options as any).find((options) => options.method === 'POST');
 }
 
+/**
+ * Watch the browser console, which the modal should never write to.
+ */
+function watchConsole() {
+  const levels = (['log', 'info', 'warn', 'error'] as const).map((level) => jest.spyOn(console, level).mockImplementation(() => {}));
+
+  return {
+    expectSilent: () => levels.forEach((level) => expect(level).not.toHaveBeenCalled()),
+  };
+}
+
 describe('the merge search', () => {
   it('finds a discussion by its number', async () => {
     const request = api({ data: ANOTHER });
@@ -96,11 +113,17 @@ describe('the merge search', () => {
   });
 
   it('searches by text, listing as many discussions as the admin set', async () => {
+    const before = app.forum.attribute('fof-merge-discussions.search_limit');
     app.forum.pushAttributes({ 'fof-merge-discussions.search_limit': 7 });
-    const request = api({ data: [ANOTHER] });
 
-    expect(await search(openModal(), 'another')).toEqual(['3']);
-    expect((request.mock.calls[0][0] as any).params).toEqual({ filter: { q: 'another' }, page: { limit: 7 } });
+    try {
+      const request = api({ data: [ANOTHER] });
+
+      expect(await search(openModal(), 'another')).toEqual(['3']);
+      expect((request.mock.calls[0][0] as any).params).toEqual({ filter: { q: 'another' }, page: { limit: 7 } });
+    } finally {
+      app.forum.pushAttributes({ 'fof-merge-discussions.search_limit': before });
+    }
   });
 
   it('waits for three letters before searching by text', async () => {
@@ -128,16 +151,25 @@ describe('the merge search', () => {
   });
 
   it('writes nothing to the browser console', async () => {
-    const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const output = watchConsole();
     api({ data: [THIS_ONE, CHOSEN, ANOTHER] });
 
     await search(openModal(), 'one');
 
-    expect(log).not.toHaveBeenCalled();
+    output.expectSilent();
   });
 });
 
 describe('merging into this discussion', () => {
+  it('writes nothing to the browser console when the merge is refused', async () => {
+    const output = watchConsole();
+    const request = jest.spyOn(app, 'request').mockRejectedValue(new Error('Refused') as never);
+
+    await submit(openModal(), request);
+
+    output.expectSilent();
+  });
+
   it('posts the chosen discussions, and the chosen ordering, to this one', async () => {
     const request = api();
     const modal = openModal();

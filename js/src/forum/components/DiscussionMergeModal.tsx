@@ -318,8 +318,8 @@ export default class DiscussionMergeModal extends FormModal<any> {
 
         app.modal.close();
       })
-      .catch((error) => {
-        console.error('Merge error:', error);
+      .catch(() => {
+        // app.request has already shown the error to the moderator.
         this.loading = false;
         m.redraw();
       })
