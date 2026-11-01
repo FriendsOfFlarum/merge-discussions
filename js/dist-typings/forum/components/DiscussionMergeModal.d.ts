@@ -14,6 +14,9 @@ export default class DiscussionMergeModal extends FormModal<any> {
     order: Stream<string>;
     merging: Discussion[];
     preview: any;
+    previewOffset: number;
+    previewShown: number;
+    previewTotal: number;
     loadingPreview: boolean;
     searchState: SearchState;
     PostStream: any;
