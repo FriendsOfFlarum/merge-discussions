@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Flarum\Discussion\Discussion;
 use Flarum\Discussion\DiscussionRepository;
 use Flarum\Discussion\Event\Deleting as DiscussionDeleting;
+use Flarum\Foundation\KnownError;
 use Flarum\Foundation\ValidationException;
 use Flarum\Post\Post;
 use Flarum\User\UserRepository;
@@ -26,9 +27,12 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Grammars\PostgresGrammar;
 use Illuminate\Events\Dispatcher;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Validation\ValidationException as IlluminateValidationException;
+use Psr\Log\LoggerInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
+use Tobyz\JsonApiServer\Exception\ErrorProvider;
 
 class MergeDiscussionHandler
 {
@@ -43,8 +47,15 @@ class MergeDiscussionHandler
      */
     protected const UNMERGED_POST_TYPES = ['discussionTagged'];
 
-    public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator, protected ConnectionInterface $db)
-    {
+    public function __construct(
+        protected UserRepository $users,
+        protected DiscussionRepository $discussions,
+        protected Dispatcher $events,
+        protected MergeDiscussionValidator $validator,
+        protected ConnectionInterface $db,
+        protected TranslatorInterface $translator,
+        protected LoggerInterface $log
+    ) {
     }
 
     public function handle(MergeDiscussion $command): Discussion
@@ -53,7 +64,16 @@ class MergeDiscussionHandler
 
         $command->actor->assertCan('merge', $discussion);
 
-        $ids = array_unique(Arr::wrap($command->ids));
+        $ids = MergeDiscussionValidator::ids($command->ids);
+
+        // An id that isn't a whole number names no discussion.
+        if (in_array(null, $ids, true)) {
+            throw new ValidationException([
+                'merging_discussions' => MergeDiscussionValidator::MISSING_DISCUSSIONS,
+            ]);
+        }
+
+        $ids = array_values(array_unique($ids));
 
         /** @var Collection $discussions */
         $discussions = Discussion::whereVisibleTo($command->actor)
@@ -130,22 +150,26 @@ class MergeDiscussionHandler
 
                     $discussion->setRelation('posts', $mergedPosts);
                 } catch (Throwable $e) {
-                    $this->catchError($e, 'updating: '.$e->getMessage());
+                    $this->catchError($e, 'updating');
                 }
 
-                try {
-                    foreach ($discussions as $d) {
-                        /** @var Discussion $d */
+                foreach ($discussions as $d) {
+                    /** @var Discussion $d */
+                    try {
                         Redirection::build($d, $discussion);
+                    } catch (Throwable $e) {
+                        $this->catchError($e, 'redirecting');
+                    }
 
+                    try {
                         // Announce it as core's delete does, so extensions clean up
                         // what they keep for the discussion.
                         $this->events->dispatch(new DiscussionDeleting($d, $command->actor, []));
 
                         $d->delete();
+                    } catch (Throwable $e) {
+                        $this->catchError($e, 'deleting');
                     }
-                } catch (Throwable $e) {
-                    $this->catchError($e, 'redirection + deleting: '.$e->getMessage());
                 }
             });
 
@@ -157,15 +181,24 @@ class MergeDiscussionHandler
         return $discussion;
     }
 
+    /**
+     * Pass on a refusal the client should see as it is, such as another
+     * extension's validation error or a permission refusal. Log anything else
+     * in full, and tell the client only which step failed.
+     *
+     * @param 'merging'|'updating'|'redirecting'|'deleting' $type
+     */
     private function catchError(Throwable $e, string $type): never
     {
-        $msg = resolve('translator')->trans("fof-merge-discussions.api.error.{$type}_failed");
+        if ($e instanceof KnownError || $e instanceof ValidationException || $e instanceof IlluminateValidationException || $e instanceof ErrorProvider) {
+            throw $e;
+        }
 
-        resolve('log')->error("[fof/merge-discussions] $msg");
-        resolve('log')->error($e);
+        $this->log->error("[fof/merge-discussions] A merge failed while {$type}.");
+        $this->log->error($e);
 
         throw new ValidationException([
-            'fof/merge-discussions' => $msg,
+            'fof/merge-discussions' => $this->translator->trans("fof-merge-discussions.api.error.{$type}_failed"),
         ]);
     }
 

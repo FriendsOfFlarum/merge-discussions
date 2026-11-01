@@ -318,8 +318,8 @@ export default class DiscussionMergeModal extends FormModal<any> {
 
         app.modal.close();
       })
-      .catch((error) => {
-        console.error('Merge error:', error);
+      .catch(() => {
+        // app.request has already shown the error to the moderator.
         this.loading = false;
         m.redraw();
       })
@@ -364,12 +364,6 @@ export default class DiscussionMergeModal extends FormModal<any> {
    */
   shouldIgnoreResult(discussion: Discussion): boolean {
     const id = discussion.id() || '';
-    console.log(
-      'should ignore',
-      id,
-      this.discussion.id(),
-      this.merging.some((d) => d.id() === id)
-    );
     return id === this.discussion.id() || this.merging.some((d) => d.id() === id);
   }
 }
