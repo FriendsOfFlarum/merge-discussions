@@ -8,6 +8,7 @@ import PostStreamState from 'flarum/forum/states/PostStreamState';
 import SearchState from 'flarum/common/states/SearchState';
 import Stream from 'flarum/common/utils/Stream';
 import classList from 'flarum/common/utils/classList';
+import formatNumber from 'flarum/common/utils/formatNumber';
 import type Discussion from 'flarum/common/models/Discussion';
 import type Mithril from 'mithril';
 
@@ -27,6 +28,9 @@ export default class DiscussionMergeModal extends FormModal<any> {
   order!: Stream<string>;
   merging!: Discussion[];
   preview!: any;
+  previewOffset!: number;
+  previewShown!: number;
+  previewTotal!: number;
   loadingPreview!: boolean;
   searchState!: SearchState;
   PostStream!: any;
@@ -169,6 +173,15 @@ export default class DiscussionMergeModal extends FormModal<any> {
             >
               {app.translator.trans('fof-merge-discussions.forum.modal.load_preview_button')}
             </Button>
+            {this.preview && this.previewTotal > this.previewShown && (
+              <p className="helpText MergeDiscussions-PreviewNote">
+                {app.translator.trans('fof-merge-discussions.forum.modal.preview_truncated', {
+                  from: formatNumber(this.previewOffset + 1),
+                  to: formatNumber(this.previewOffset + this.previewShown),
+                  total: formatNumber(this.previewTotal),
+                })}
+              </p>
+            )}
             {this.preview && this.PostStream && (
               <div className="MergeDiscussions-PostStream">
                 <div className="Hero">
@@ -215,6 +228,7 @@ export default class DiscussionMergeModal extends FormModal<any> {
 
   changeType(key: string): void {
     this.type(key);
+    delete this.preview;
 
     if (this.merging.length > 1) this.merging = [];
   }
@@ -236,14 +250,21 @@ export default class DiscussionMergeModal extends FormModal<any> {
 
         let posts = payload.data.relationships.posts.data.map((record: any) => app.store.getById('posts', record.id));
 
+        // The preview holds a window of the merged discussion, from just before
+        // the first post merged in.
+        const meta = payload.meta?.['fof-merge-discussions'];
+        this.previewOffset = meta?.offset ?? 0;
+        this.previewShown = posts.length;
+        this.previewTotal = meta?.totalPosts ?? posts.length;
+
         // apply date-sort only if ordering === 'date'
         if (this.order() === 'date') {
           posts.sort((a: any, b: any) => a.createdAt() - b.createdAt());
         }
 
-        // then renumber & rebuild the relationship array
+        // Rebuild the relationship in that order. The posts keep the numbers the
+        // server gave them in the merged discussion.
         posts.forEach((p: any, i: number) => {
-          p.number(i + 1);
           payload.data.relationships.posts.data[i] = {
             type: 'posts',
             id: p.id(),

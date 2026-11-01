@@ -24,6 +24,7 @@ use FoF\MergeDiscussions\Models\Redirection;
 use FoF\MergeDiscussions\Validators\MergeDiscussionValidator;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Grammars\PostgresGrammar;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as SupportCollection;
@@ -36,6 +37,11 @@ class MergeDiscussionHandler
      * long the merged discussion is.
      */
     protected const RENUMBER_CHUNK_SIZE = 500;
+
+    /**
+     * Post types a merge leaves behind in the merged-away discussion.
+     */
+    protected const UNMERGED_POST_TYPES = ['discussionTagged'];
 
     public function __construct(protected UserRepository $users, protected DiscussionRepository $discussions, protected Dispatcher $events, protected MergeDiscussionValidator $validator, protected ConnectionInterface $db)
     {
@@ -75,11 +81,12 @@ class MergeDiscussionHandler
             ->withoutGlobalScopes()
             ->get()
             ->reject(function (Post $post) {
-                return $post->type === 'discussionTagged';
+                return in_array($post->type, static::UNMERGED_POST_TYPES, true);
             });
 
+        // Only the ids: the posts as arrays would render every post's content again.
         $this->validator->assertValid([
-            'posts' => $posts->toArray(),
+            'posts' => $posts->modelKeys(),
         ]);
 
         if ($command->ordering === 'suffix') {
@@ -91,6 +98,9 @@ class MergeDiscussionHandler
         if ($command->merge) {
             $this->db->transaction(function () use ($discussions, $discussion, $command, $posts) {
                 try {
+                    // Read from the posts table, so before the posts move.
+                    $this->recordWhereMovedPostsCameFrom($discussions->modelKeys());
+
                     $this->persistPostPositions($discussion);
                 } catch (Throwable $e) {
                     $this->catchError($e, 'merging');
@@ -101,16 +111,24 @@ class MergeDiscussionHandler
                 );
 
                 try {
-                    /** @var Post $firstPost */
-                    $firstPost = $discussion->posts->first();
+                    $mergedPosts = $discussion->posts;
 
+                    /** @var Post $firstPost */
+                    $firstPost = $mergedPosts->first();
+
+                    // refresh() reloads every loaded relation, which would read a
+                    // second copy of every post. The posts are set back afterwards
+                    // from memory, so listeners still get them.
                     $discussion
+                        ->unsetRelation('posts')
                         ->refresh()
                         ->refreshCommentCount()
                         ->refreshParticipantCount()
                         ->refreshLastPost()
                         ->setFirstPost($firstPost)
                         ->save();
+
+                    $discussion->setRelation('posts', $mergedPosts);
                 } catch (Throwable $e) {
                     $this->catchError($e, 'updating: '.$e->getMessage());
                 }
@@ -187,8 +205,6 @@ class MergeDiscussionHandler
                 ->update(['number' => $this->db->raw("CASE id $cases END")]);
         }
 
-        $this->recordWhereMovedPostsCameFrom($discussion, $moved);
-
         $moved->each->syncOriginal();
     }
 
@@ -196,22 +212,14 @@ class MergeDiscussionHandler
      * Record the old discussion and number of each post taken from another
      * discussion, so links to it can follow it once that discussion is gone.
      *
-     * @param Collection<int, Post> $moved not yet synced, so getOriginal() is the old position
+     * Runs before the posts move, copying their positions straight from the
+     * posts table: a fixed number of statements however many posts there are.
+     *
+     * @param int[] $mergedIds the discussions being merged away
      */
-    private function recordWhereMovedPostsCameFrom(Discussion $discussion, Collection $moved): void
+    private function recordWhereMovedPostsCameFrom(array $mergedIds): void
     {
-        $now = Carbon::now();
-
-        $rows = $moved
-            ->filter(fn (Post $post) => (int) $post->getOriginal('discussion_id') !== $discussion->id && $post->getOriginal('number') !== null)
-            ->map(fn (Post $post) => [
-                'post_id'            => $post->id,
-                'from_discussion_id' => $post->getOriginal('discussion_id'),
-                'from_number'        => $post->getOriginal('number'),
-                'created_at'         => $now,
-            ]);
-
-        if ($rows->isEmpty()) {
+        if (!$mergedIds) {
             return;
         }
 
@@ -219,12 +227,27 @@ class MergeDiscussionHandler
         // highest id after a restart). Rows left by the earlier discussion would
         // collide, and its links now mean this one's posts anyway.
         $this->db->table('fof_merged_posts')
-            ->whereIntegerInRaw('from_discussion_id', $rows->pluck('from_discussion_id')->unique()->values()->all())
+            ->whereIntegerInRaw('from_discussion_id', $mergedIds)
             ->delete();
 
-        foreach ($rows->chunk(static::RENUMBER_CHUNK_SIZE) as $chunk) {
-            $this->db->table('fof_merged_posts')->insert($chunk->values()->all());
-        }
+        $posts = $this->db->table('posts');
+        $grammar = $posts->getGrammar();
+
+        // The recording time is bound in the select list. A bound value there has
+        // no type, and PostgreSQL will not put text into a timestamp column, so it
+        // is cast there. Copying a post's own date instead would fail on MySQL in
+        // strict mode for any post dated outside TIMESTAMP's 1970-2038 range.
+        $recordedAt = $grammar instanceof PostgresGrammar ? 'CAST(? AS TIMESTAMP)' : '?';
+
+        $this->db->table('fof_merged_posts')->insertUsing(
+            ['post_id', 'from_discussion_id', 'from_number', 'created_at'],
+            $posts
+                ->select(['id', 'discussion_id', 'number'])
+                ->selectRaw($recordedAt, [Carbon::now()->format($grammar->getDateFormat())])
+                ->whereIntegerInRaw('discussion_id', $mergedIds)
+                ->whereNotIn('type', static::UNMERGED_POST_TYPES)
+                ->whereNotNull('number')
+        );
     }
 
     private function setRelationsAndMergeByDate(Discussion $discussion, SupportCollection $posts): Discussion

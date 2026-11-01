@@ -24,6 +24,17 @@ use Psr\Http\Message\ResponseInterface;
 
 class MergeDiscussionEndpoints
 {
+    /**
+     * Posts the merge preview shows.
+     */
+    protected const PREVIEW_POSTS = 50;
+
+    /**
+     * Posts the preview shows before the first post being merged in, to show
+     * where the merged posts land.
+     */
+    protected const PREVIEW_CONTEXT = 3;
+
     public function __construct(
         protected Dispatcher $bus,
         protected MergeDiscussionValidator $validator
@@ -98,8 +109,19 @@ class MergeDiscussionEndpoints
                     // Use Flarum's serializer to properly serialize the discussion
                     $serializer = new \Flarum\Api\Serializer($context);
 
-                    // Get the merged posts from the relationship set by the handler
-                    $mergedPosts = $discussion->getRelation('posts');
+                    // The merged posts, in order, from the relationship set by the handler.
+                    // Only a window of them is rendered and sent: a mega thread's every
+                    // post at once is too much for the server, and again for the browser.
+                    $allPosts = $discussion->getRelation('posts')->values();
+
+                    // The window opens just before the first post being merged in. From
+                    // the top, a long target discussion would fill it with its own posts.
+                    $firstMergedIn = $allPosts->search(
+                        fn (Post $post) => (int) $post->getOriginal('discussion_id') !== (int) $discussion->id
+                    );
+                    $offset = $firstMergedIn === false ? 0 : max(0, $firstMergedIn - static::PREVIEW_CONTEXT);
+
+                    $mergedPosts = $allPosts->slice($offset, static::PREVIEW_POSTS);
 
                     // Serialize the discussion with posts included
                     $resource = $context->resource(
@@ -115,6 +137,9 @@ class MergeDiscussionEndpoints
                     $postSerializer = new \Flarum\Api\Serializer($context);
 
                     foreach ($mergedPosts as $post) {
+                        // Each post belongs to the target now: spare serializing it a lookup.
+                        $post->setRelation('discussion', $discussion);
+
                         $postSerializer->addPrimary($postResource, $post, []);
                     }
 
@@ -135,6 +160,7 @@ class MergeDiscussionEndpoints
                     return new JsonResponse([
                         'data'     => $primary[0],
                         'included' => $included,
+                        'meta'     => ['fof-merge-discussions' => ['totalPosts' => $allPosts->count(), 'offset' => $offset]],
                     ]);
                 }),
 

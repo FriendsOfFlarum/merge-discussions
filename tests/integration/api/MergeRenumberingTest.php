@@ -18,6 +18,7 @@ use Flarum\Post\Post;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\Testing\integration\TestCase;
 use Flarum\User\User;
+use FoF\MergeDiscussions\Events\DiscussionWasMerged;
 use FoF\MergeDiscussions\Events\MergingDiscussions;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
@@ -281,9 +282,10 @@ class MergeRenumberingTest extends TestCase
 
         $this->assertMerged($this->merge(1, [2], 'date'));
 
+        $posts = preg_quote($this->database()->getTablePrefix().'posts', '/');
         $postUpdates = array_values(array_filter(
             array_column($this->database()->getQueryLog(), 'query'),
-            fn (string $sql) => preg_match('/^update\s+\S*posts\S*\s+set\b/i', $sql) === 1
+            fn (string $sql) => preg_match('/^update\s+[`"]?'.$posts.'[`"]?\s+set\b/i', $sql) === 1
         ));
 
         // Per 500-post chunk: one statement to park the posts, one to number them.
@@ -325,6 +327,57 @@ class MergeRenumberingTest extends TestCase
         $this->assertPositions(1, [201, 101, 202, 102]);
     }
 
+    /**
+     * Listeners after the merge get the merged discussion with its posts, as
+     * when refresh() reloaded them, but without reading them a second time.
+     */
+    #[Test]
+    public function merged_listeners_get_the_merged_discussion_with_its_posts()
+    {
+        $this->extend((new Extend\Event())->listen(DiscussionWasMerged::class, function (DiscussionWasMerged $event) {
+            self::$seenByListener = $event->discussion->relationLoaded('posts')
+                ? $event->discussion->posts->map(fn (Post $post) => [$post->id, $post->number])->values()->all()
+                : ['posts not loaded'];
+        }));
+
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 10],
+            [102, 1, 2, 30],
+            [201, 2, 1, 0],
+            [202, 2, 2, 20],
+        ]);
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $this->assertSame([[201, 1], [101, 2], [202, 3], [102, 4]], self::$seenByListener);
+    }
+
+    /**
+     * Where a post came from is recorded with the time of the merge, never the
+     * post's own date: in strict mode MySQL refuses a date outside TIMESTAMP's
+     * 1970-2038 range, which an imported post can have.
+     */
+    #[Test]
+    public function a_merged_post_is_recorded_with_the_time_of_the_merge_whatever_its_own_date()
+    {
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 0],
+            [201, 2, 1, 10, ['created_at' => Carbon::parse('1965-06-01 00:00:00')]],
+        ]);
+
+        // Flarum connects with strict mode off, which would store a zero date instead.
+        if (in_array($this->database()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $this->database()->statement("SET SESSION sql_mode = 'STRICT_TRANS_TABLES'");
+        }
+
+        $before = Carbon::now()->subMinute();
+
+        $this->assertMerged($this->merge(1, [2], 'date'));
+
+        $recordedAt = Carbon::parse($this->database()->table('fof_merged_posts')->where('post_id', 201)->value('created_at'));
+        $this->assertTrue($recordedAt->greaterThan($before), "Recorded at $recordedAt");
+    }
+
     #[Test]
     public function a_failure_after_the_writes_rolls_the_whole_merge_back()
     {
@@ -345,6 +398,38 @@ class MergeRenumberingTest extends TestCase
         $this->assertPositions(2, [201, 202]);
         $this->assertNotNull(Discussion::find(2));
         $this->assertEquals(0, $this->database()->table('fof_merge_discussions_redirections')->count());
+    }
+
+    /**
+     * Every previewed post belongs to the target: serializing each one must not
+     * fetch it again.
+     */
+    #[Test]
+    public function preview_does_not_look_up_the_discussion_once_per_post()
+    {
+        $this->seed([1 => 'Target', 2 => 'Source'], [
+            [101, 1, 1, 0],
+            [102, 1, 2, 20],
+            [201, 2, 1, 10],
+            [202, 2, 2, 30],
+        ]);
+
+        $this->database()->enableQueryLog();
+
+        $response = $this->send(
+            $this->request('GET', '/api/discussions/1/merge-preview', ['authenticatedAs' => self::MODERATOR])
+                ->withQueryParams(['byIds' => '2', 'byOrdering' => 'date'])
+        );
+
+        $this->assertEquals(200, $response->getStatusCode(), (string) $response->getBody());
+
+        $discussions = preg_quote($this->database()->getTablePrefix().'discussions', '/');
+        $lookups = array_filter(
+            array_column($this->database()->getQueryLog(), 'query'),
+            fn (string $sql) => preg_match('/^select \* from [`"]?'.$discussions.'[`"]? where [`"]?'.$discussions.'[`"]?\.[`"]?id[`"]? = \? limit 1$/i', $sql) === 1
+        );
+
+        $this->assertLessThanOrEqual(1, count($lookups), implode("\n", $lookups));
     }
 
     #[Test]

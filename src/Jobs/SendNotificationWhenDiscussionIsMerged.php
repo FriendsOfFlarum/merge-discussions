@@ -17,10 +17,16 @@ use Flarum\User\User;
 use FoF\MergeDiscussions\Notification\DiscussionMergedBlueprint;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\Attributes\WithoutRelations;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
+/**
+ * Queued without the models' loaded relations: the merged discussion carries
+ * every post of the merge, which the job would otherwise serialize and reload.
+ */
+#[WithoutRelations]
 class SendNotificationWhenDiscussionIsMerged implements ShouldQueue
 {
     use Queueable;

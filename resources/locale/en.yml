@@ -18,6 +18,7 @@ fof-merge-discussions:
       type_from_help_text: Choose target discussion to merge {title} into.
 
       load_preview_button: Preview
+      preview_truncated: Showing posts {from} to {to} of {total}.
       submit_button: => fof-merge-discussions.ref.merge
 
     notification:
