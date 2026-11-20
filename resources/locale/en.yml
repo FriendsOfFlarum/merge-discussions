@@ -67,3 +67,9 @@ flarum-audit:
       discussion:
         merged_away: Merged {discussion} into {new_discussion}
         merged_into: Merged {post_count} posts from {original_discussion_ids_count} discussions into {discussion}
+
+core:
+  email:
+    notification:
+      types:
+        discussionMerged: Your discussions being merged
